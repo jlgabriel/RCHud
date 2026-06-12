@@ -1,0 +1,12 @@
+# Normaliza terminaciones de línea: el repo guarda LF siempre.
+# Importante para un plugin multiplataforma (Windows/macOS/Linux).
+* text=auto eol=lf
+
+# Archivos binarios: nunca tocar terminaciones de línea.
+*.ttf binary
+*.png binary
+*.xpl binary
+*.zip binary
+*.so binary
+*.dylib binary
+*.dll binary

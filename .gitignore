@@ -1,0 +1,35 @@
+# =============================================================
+#  RCHud — .gitignore
+#  Filosofía: el repo versiona SOLO nuestro código Lua de autor
+#  (RCHud/data/modules/) + documentación. El runtime de SASL y los
+#  binarios .xpl NO son nuestro código: se obtienen del paquete SASL
+#  y se superponen al empaquetar. Igual que hace el repo de MiniHUD.
+# =============================================================
+
+# --- Paquete de referencia original (solo local, no versionar) ---
+/MiniHUD/
+/MiniHUD.zip
+
+# --- Runtime / framework de SASL dentro del plugin RCHud ---
+#     (no es código nuestro; se distribuye con el paquete SASL)
+RCHud/64/
+RCHud/liblinux/
+RCHud/libmac/
+RCHud/libwin/
+RCHud/data/api/
+RCHud/data/init/
+RCHud/data/components/
+
+# --- Artefactos de empaquetado ---
+*.zip
+*.xpl
+
+# --- Sistema operativo / editores ---
+.DS_Store
+Thumbs.db
+desktop.ini
+*.log
+.vscode/
+.idea/
+*.swp
+*~
