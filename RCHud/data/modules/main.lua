@@ -26,7 +26,8 @@ local localState = {
    windowHeight = startHeight,
    windowWidth = startWidth,
    contextWindow = nil,
-   setStartScale = false
+   setStartScale = false,
+   units = "metric"   -- "metric" (m, m/s) | "aviation" (ft, fpm). Alternable con RCHud/toggleUnits
 }
 
 local instrumentPanel = loadComponent("instrumentpanel")
@@ -57,6 +58,20 @@ local toggleHUDCommand = sasl.createCommand("RCHud/toggleHUD", "show/hide RCHud"
 sasl.registerCommandHandler(toggleHUDCommand, 0, function (phase)
     if phase == SASL_COMMAND_BEGIN then
         instrumentWindow:setIsVisible(not instrumentWindow:isVisible())
+    end
+    return 0 -- don't allow other callbacks to run
+end)
+
+-- comando para alternar unidades en caliente (métrico <-> aviación)
+local toggleUnitsCommand = sasl.createCommand("RCHud/toggleUnits", "alternar unidades metrico/aviacion")
+sasl.registerCommandHandler(toggleUnitsCommand, 0, function (phase)
+    if phase == SASL_COMMAND_BEGIN then
+        if localState.units == "aviation" then
+            localState.units = "metric"
+        else
+            localState.units = "aviation"
+        end
+        sasl.logInfo("RCHud units:", localState.units)
     end
     return 0 -- don't allow other callbacks to run
 end)

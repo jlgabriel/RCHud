@@ -46,6 +46,58 @@ local throttleProp = globalPropertyf("sim/cockpit2/engine/actuators/throttle_rat
 local windDirectionProp = globalPropertyf("sim/cockpit2/gauges/indicators/wind_heading_deg_mag")
 local windSpeedProp = globalPropertyf("sim/cockpit2/gauges/indicators/wind_speed_kts")
 
+------------------------------------------------------------------------
+-- RCHud — librería: unidades configurables y helpers de legibilidad
+------------------------------------------------------------------------
+-- El estado de unidades vive en localState (compartido con main.lua) y
+-- se alterna en caliente con el comando RCHud/toggleUnits.
+--   "metric"   => m, m/s
+--   "aviation" => ft, fpm
+local function useMetric()
+    return get(localState).units ~= "aviation"
+end
+
+local M_TO_FT   = 3.28084
+local FPM_TO_MS = 0.00508
+
+-- Altura a mostrar: y_agl viene en METROS. Devuelve (valor, unidad).
+local function aglParts(meters)
+    if useMetric() then return meters, "m" else return meters * M_TO_FT, "ft" end
+end
+
+-- Velocidad vertical a mostrar: vvi viene en FPM. Devuelve (texto, unidad).
+local function vsParts(fpm)
+    if useMetric() then
+        return string.format("%+.1f", fpm * FPM_TO_MS), "m/s"
+    else
+        return string.format("%+.0f", fpm), "fpm"
+    end
+end
+
+-- Halo de legibilidad sobre fondo variable (cielo/pasto/pista): negro
+-- semitransparente bajo el trazo blanco.
+local haloColor = {0, 0, 0, 0.55}
+
+-- Texto con contorno (8 direcciones). SASL no dibuja outline nativo.
+local function haloText(font, x, y, text, size, align, color)
+    local o = math.max(1.0, size * 0.07)
+    sasl.gl.drawText(font, x-o, y,   text, size, false, false, align, haloColor)
+    sasl.gl.drawText(font, x+o, y,   text, size, false, false, align, haloColor)
+    sasl.gl.drawText(font, x,   y-o, text, size, false, false, align, haloColor)
+    sasl.gl.drawText(font, x,   y+o, text, size, false, false, align, haloColor)
+    sasl.gl.drawText(font, x-o, y-o, text, size, false, false, align, haloColor)
+    sasl.gl.drawText(font, x+o, y-o, text, size, false, false, align, haloColor)
+    sasl.gl.drawText(font, x-o, y+o, text, size, false, false, align, haloColor)
+    sasl.gl.drawText(font, x+o, y+o, text, size, false, false, align, haloColor)
+    sasl.gl.drawText(font, x,   y,   text, size, false, false, align, color)
+end
+
+-- Rectángulo (barra/tick) con borde oscuro para legibilidad.
+local function haloRect(x, y, w, h, color)
+    sasl.gl.drawRectangle(x-1, y-1, w+2, h+2, haloColor)
+    sasl.gl.drawRectangle(x, y, w, h, color)
+end
+
 local throttleRect = {0, 0, 0, 0}
 local propRect = {0, 0, 0, 0}
 local mixtureRect = {0, 0, 0, 0}
@@ -195,28 +247,54 @@ function draw()
  
      
      ------------------------------------------------------------------------
-     -- vvi/altitude
+     -- altura AGL + variómetro  (RC: altura sobre el terreno, no MSL)
      ------------------------------------------------------------------------
      local altimeterX = airspeedFrameWidth + (mainFrameWidth * 0.55)
      local altimeterY = 50*px
-     local altitude = get(altitudeProp)
-     local minStripAlt = math.floor(altitude/100)*100
-     local altRangeMax = 3
-     local altRangeMin = -2
-     local totalRange = (altRangeMax - altRangeMin) * 100
-     for altIdx=altRangeMin, altRangeMax do
-         local stripAlt = minStripAlt + altIdx*100
-         local altDifference = altitude - stripAlt
-         if stripAlt >= 0 then
-             sasl.gl.drawText(sourceCodePro, altimeterX, altimeterY-3*px-altDifference/(2*px),
-                              string.format("%.0f", stripAlt), baseFontSize, false, false, TEXT_ALIGN_CENTER,
-                              {1, 1, 1, 1-math.abs(altDifference)/totalRange})
+     local aglM = get(altitudeAGLProp)
+     if aglM < 0 then aglM = 0 end
+     local aglDisp, aglUnit = aglParts(aglM)
+     -- escala de la cinta vertical (unidades-por-tick y px-por-unidad)
+     local tickInc   = useMetric() and 10 or 50
+     local pxPerUnit = useMetric() and (0.9*px) or (0.27*px)
+     local halfWin   = 30*px
+
+     -- cinta: etiquetas + ticks, centrada en el valor actual; se desvanecen
+     -- hacia los bordes de la ventana
+     local baseTick = math.floor(aglDisp/tickInc)*tickInc
+     for i=-3,3 do
+         local tickVal = baseTick + i*tickInc
+         if tickVal >= 0 then
+             local ty = altimeterY + (tickVal - aglDisp)*pxPerUnit
+             if math.abs(ty-altimeterY) <= halfWin then
+                 local fade = 1 - (math.abs(ty-altimeterY)/halfWin)*0.65
+                 haloRect(altimeterX-(20*px), ty, 6*px, 1*px, {1, 1, 1, fade})
+                 haloText(sourceCodePro, altimeterX-(23*px), ty-(3*px),
+                          string.format("%.0f", tickVal), baseFontSize*0.75,
+                          TEXT_ALIGN_RIGHT, {1, 1, 1, fade})
+             end
          end
      end
-     sasl.gl.drawRectangle(altimeterX-(30*px), altimeterY-(8*px), 60*px, 16*px, background)
-     sasl.gl.drawFrame(altimeterX-(30*px), altimeterY-(8*px), 60*px, 16*px, white)
-     sasl.gl.drawText(sourceCodePro, altimeterX, altimeterY-(4*px), string.format("%.0f", altitude), baseFontSize, false, false, TEXT_ALIGN_CENTER, white)
-     local vviX = altimeterX+(29*px)
+     -- línea de TIERRA (AGL=0): referencia del suelo cuando entra en ventana
+     local groundY = altimeterY + (0 - aglDisp)*pxPerUnit
+     if groundY >= altimeterY-halfWin and groundY <= altimeterY+halfWin then
+         haloRect(altimeterX-(22*px), groundY-(1*px), 14*px, 2*px, green)
+     end
+
+     -- lectura numérica de AGL: "valor unidad" (p. ej. "0 m" / "45 m")
+     local boxW, boxH = 46*px, 18*px
+     local boxX = altimeterX-(12*px)
+     sasl.gl.drawRectangle(boxX, altimeterY-(boxH/2), boxW, boxH, background)
+     sasl.gl.drawFrame(boxX, altimeterY-(boxH/2), boxW, boxH, white)
+     haloText(sourceCodePro, boxX+(4*px), altimeterY-(5*px),
+              string.format("%.0f %s", aglDisp, aglUnit), baseFontSize*0.9,
+              TEXT_ALIGN_LEFT, white)
+     -- etiqueta AGL encima de la caja
+     haloText(sourceCodePro, boxX+(boxW/2), altimeterY+(boxH/2)+(4*px),
+              "AGL", baseFontSize*0.7, TEXT_ALIGN_CENTER, lightGrey)
+
+     -- variómetro (VVI): aguja lateral; texto en unidades configurables
+     local vviX = altimeterX+(40*px)
      local vviY = altimeterY + get(vviProp)*0.007
      local vviColor = white
      if vviY < altimeterY-(30*px) then
@@ -226,11 +304,13 @@ function draw()
          vviY = altimeterY+(30*px)
          vviColor = orange
      end
-     sasl.gl.drawRectangle(vviX, altimeterY-(30*px), 1*px,  60*px, white) -- axis
+     haloRect(vviX, altimeterY-(30*px), 1*px, 60*px, white) -- eje
      sasl.gl.drawPolyLine({vviX, vviY,
                            vviX+(8*px), vviY+(6*px), vviX+(55*px), vviY+(6*px), vviX+(55*px), vviY-(6*px), vviX+(8*px), vviY-(6*px),
                            vviX, vviY}, vviColor)
-     sasl.gl.drawText(sourceCodePro, vviX+(10*px), vviY-(4*px), string.format("%+.0f", get(vviProp)), baseFontSize, false, false, TEXT_ALIGN_LEFT, vviColor)
+     local vsStr, vsUnit = vsParts(get(vviProp))
+     haloText(sourceCodePro, vviX+(10*px), vviY-(4*px),
+              vsStr.." "..vsUnit, baseFontSize*0.8, TEXT_ALIGN_LEFT, vviColor)
   
      
      ------------------------------------------------------------------------
