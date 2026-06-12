@@ -45,6 +45,8 @@ local propProp = globalPropertyf("sim/cockpit2/engine/actuators/prop_ratio_all")
 local throttleProp = globalPropertyf("sim/cockpit2/engine/actuators/throttle_ratio_all")
 local windDirectionProp = globalPropertyf("sim/cockpit2/gauges/indicators/wind_heading_deg_mag")
 local windSpeedProp = globalPropertyf("sim/cockpit2/gauges/indicators/wind_speed_kts")
+local pitchProp = globalPropertyf("sim/flightmodel/position/theta")  -- cabeceo: + nariz arriba
+local rollProp  = globalPropertyf("sim/flightmodel/position/phi")    -- alabeo: + ala derecha abajo
 
 ------------------------------------------------------------------------
 -- RCHud — librería: unidades configurables y helpers de legibilidad
@@ -256,7 +258,7 @@ function draw()
      local aglDisp, aglUnit = aglParts(aglM)
      -- escala de la cinta vertical (unidades-por-tick y px-por-unidad)
      local tickInc   = useMetric() and 10 or 50
-     local pxPerUnit = useMetric() and (0.9*px) or (0.27*px)
+     local pxPerUnit = useMetric() and (1.4*px) or (0.42*px)
      local halfWin   = 30*px
 
      -- cinta: etiquetas + ticks, centrada en el valor actual; se desvanecen
@@ -269,8 +271,8 @@ function draw()
              if math.abs(ty-altimeterY) <= halfWin then
                  local fade = 1 - (math.abs(ty-altimeterY)/halfWin)*0.65
                  haloRect(altimeterX-(20*px), ty, 6*px, 1*px, {1, 1, 1, fade})
-                 haloText(sourceCodePro, altimeterX-(23*px), ty-(3*px),
-                          string.format("%.0f", tickVal), baseFontSize*0.75,
+                 haloText(sourceCodePro, altimeterX-(23*px), ty-(4*px),
+                          string.format("%.0f", tickVal), baseFontSize*0.9,
                           TEXT_ALIGN_RIGHT, {1, 1, 1, fade})
              end
          end
@@ -291,7 +293,7 @@ function draw()
               TEXT_ALIGN_LEFT, white)
      -- etiqueta AGL encima de la caja
      haloText(sourceCodePro, boxX+(boxW/2), altimeterY+(boxH/2)+(4*px),
-              "AGL", baseFontSize*0.7, TEXT_ALIGN_CENTER, lightGrey)
+              "AGL", baseFontSize*0.8, TEXT_ALIGN_CENTER, lightGrey)
 
      -- variómetro (VVI): aguja lateral; texto en unidades configurables
      local vviX = altimeterX+(40*px)
@@ -313,6 +315,68 @@ function draw()
               vsStr.." "..vsUnit, baseFontSize*0.8, TEXT_ALIGN_LEFT, vviColor)
   
      
+     ------------------------------------------------------------------------
+     -- actitud (ADI): disco con cielo azul / tierra café
+     -- Cielo = disco completo; tierra = segmento circular bajo el horizonte
+     -- (abanico de triángulos). Todo queda dentro del disco por construcción.
+     ------------------------------------------------------------------------
+     local attX = airspeedFrameWidth + (mainFrameWidth * 0.5)
+     local attY = 165*px
+     local attR = 40*px
+     local pitch = get(pitchProp)
+     local roll  = get(rollProp)
+     local pxPerDeg = attR / 25                   -- 25° del centro al borde del disco
+     local po = -pitch * pxPerDeg                 -- nariz arriba => horizonte abajo
+     local skyColor    = {0.20, 0.52, 0.82, 0.95}
+     local groundColor = {0.50, 0.36, 0.20, 0.95}
+     local horizonTh   = 1.8*px
+
+     sasl.gl.saveGraphicsContext()
+     sasl.gl.setTranslateTransform(attX, attY)
+     sasl.gl.setRotateTransform(-roll)                         -- alabeo
+     sasl.gl.drawCircle(0, 0, attR, true, skyColor)            -- cielo (disco completo)
+     if po <= -attR then
+         sasl.gl.drawCircle(0, 0, attR, true, groundColor)     -- todo tierra
+     elseif po < attR then
+         -- segmento de tierra: abanico de triángulos desde el extremo izq de la cuerda
+         local as = math.asin(po / attR)
+         local a0 = math.pi - as                               -- ángulo extremo izq
+         local a1 = 2*math.pi + as                             -- recorre el arco inferior
+         local xc = attR * math.cos(as)                        -- media cuerda = sqrt(R^2-po^2)
+         local steps = 22
+         local lx, ly = -xc, po
+         local pX, pY = lx, ly
+         for i = 1, steps do
+             local t  = a0 + (a1 - a0) * (i / steps)
+             local nx = attR * math.cos(t)
+             local ny = attR * math.sin(t)
+             sasl.gl.drawTriangle(lx, ly, pX, pY, nx, ny, groundColor)
+             pX, pY = nx, ny
+         end
+         -- línea de horizonte (cuerda, ajustada al disco)
+         sasl.gl.drawRectangle(-xc, po-(horizonTh/2), 2*xc, horizonTh, white)
+     end
+     -- escalera de cabeceo (±10, ±20)
+     for _, a in ipairs({-20, -10, 10, 20}) do
+         local ry = po + a*pxPerDeg
+         if math.abs(ry) < attR-(10*px) then
+             local w = (a % 20 == 0) and (18*px) or (10*px)
+             sasl.gl.drawRectangle(-w/2, ry-(0.5*px), w, 1*px, white)
+         end
+     end
+     sasl.gl.restoreGraphicsContext()
+
+     -- borde del disco
+     sasl.gl.drawCircle(attX, attY, attR, false, white)
+     -- símbolo de aeronave fijo (amarillo) al centro
+     haloRect(attX-(16*px), attY-(1*px),   10*px, 2*px, yellow)
+     haloRect(attX+(6*px),  attY-(1*px),   10*px, 2*px, yellow)
+     haloRect(attX-(1.5*px), attY-(1.5*px), 3*px, 3*px, yellow)
+     -- referencia de alabeo: triángulo fijo arriba del disco
+     sasl.gl.drawTriangle(attX, attY+attR-(1*px),
+                          attX-(5*px), attY+attR+(7*px),
+                          attX+(5*px), attY+attR+(7*px), white)
+
      ------------------------------------------------------------------------
      -- compass
      ------------------------------------------------------------------------
