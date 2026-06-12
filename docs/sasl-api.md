@@ -97,6 +97,22 @@ las **partes estáticas** (ticks, números de un dial) a textura y redibujar
 en vector solo lo que se mueve (agujas). Con pocos instrumentos, redibujar
 todo cada frame es barato — no optimizar antes de tiempo.
 
+## Recorte a una región (aprendido)
+
+Existen `gl.drawMaskStart` / `gl.drawUnderMask` / `gl.drawMaskEnd`, pero en
+las pruebas del ADI **no recortaron** el relleno al disco (el contenido se
+dibujó sin clip). Hasta confirmar su uso correcto en el manual oficial
+(`https://1-sim.com/files/SASL3Manual.pdf`), **evitar depender de ellas**.
+
+**Técnica robusta usada en el ADI:** construir la geometría ya recortada
+en vez de enmascarar. Para rellenar un disco partido por una línea
+(horizonte): dibujar el círculo completo de un color y, encima, el
+**segmento circular** del otro color como un **abanico de triángulos**
+(`drawTriangle`) cuyos vértices están sobre el círculo. Así el relleno
+queda dentro del disco por construcción. La línea divisoria se dibuja del
+ancho exacto de la **cuerda** (`2·√(R²−d²)`) para que no sobresalga. Ver
+el bloque de actitud en `instrumentpanel.lua`.
+
 ## Propiedades / datarefs (helpers SASL)
 
 | Helper | Uso |
