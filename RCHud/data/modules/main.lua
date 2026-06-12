@@ -1,10 +1,17 @@
+-- RCHud — HUD overlay para vuelo RC en X-Plane 12
+-- Copyright (C) 2026 Juan Luis Gabriel
+-- Derivado de MiniHUD, Copyright (C) 2023 Bastian Bechtold
+--
+-- Programa libre bajo GPLv3 o posterior (ver LICENSE).
+-- Distribuido SIN GARANTÍA. Ver <https://www.gnu.org/licenses/>.
+
 -- set up SASL preferences:
 sasl.options.setAircraftPanelRendering(false)
 sasl.options.set3DRendering(false)
 sasl.options.setInteractivity(false)
 
-local miniHUDVersionProp = createGlobalPropertys("miniHUD/version", "v1.3.0")
-sasl.logInfo("Version:", get(miniHUDVersionProp))
+local rcHudVersionProp = createGlobalPropertys("RCHud/version", "v0.1.0")
+sasl.logInfo("RCHud version:", get(rcHudVersionProp))
 
 -- These are hard-coded and should never really change
 -- they are based on the visual settings TreeBaron
@@ -24,7 +31,7 @@ local localState = {
 
 local instrumentPanel = loadComponent("instrumentpanel")
 local instrumentWindow = contextWindow({
-    name = "Instrument HUD";
+    name = "RCHud";
     position = { 50, 50, startWidth, startHeight};
     saveState = false;
     noDecore = true;
@@ -46,7 +53,7 @@ local instrumentWindow = contextWindow({
 localState.contextWindow = instrumentWindow;
 
 -- create a command for toggling the HUD on and off
-local toggleHUDCommand = sasl.createCommand("miniHUD/toggleHUD", "show/hide miniHUD")
+local toggleHUDCommand = sasl.createCommand("RCHud/toggleHUD", "show/hide RCHud")
 sasl.registerCommandHandler(toggleHUDCommand, 0, function (phase)
     if phase == SASL_COMMAND_BEGIN then
         instrumentWindow:setIsVisible(not instrumentWindow:isVisible())

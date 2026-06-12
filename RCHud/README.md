@@ -1,77 +1,102 @@
-# MiniHUD
+# RCHud
 
-An X-Plane plugin that shows a small instrument panel for flying
-without seeing the cockpit.
+**HUD overlay para vuelo RC en X-Plane 12.**
 
-Sometimes I like to fly from the external view, or on a small laptop
-screen where the cockpit instruments are very hard to read. I created
-the MiniHUD to make X-Plane usable in these situations.
+Plugin que dibuja un panel de instrumentos mínimo y vectorial sobre la
+pantalla, pensado para volar aviones radiocontrol (RC) en vista externa,
+sin depender de la cabina del modelo.
 
-![External Screenshot](1920by1080Screenshot.PNG)
-![Internal Screenshot](internal%20screenshot.png)
+Inspirado en el overlay de Aerofly RC y construido sobre
+[MiniHUD](https://github.com/bastibe/MiniHUD) de Bastian Bechtold. La
+idea es dar al piloto RC, de un vistazo y desde el suelo, solo lo que
+necesita: altura sobre el terreno, energía/combustible restante,
+distancia y rumbo al punto de despegue, orientación del modelo y
+advertencias.
 
-From left to right, the plugin shows:
+> ⚠️ **Estado: desarrollo temprano (v0.1.0).** Por ahora el plugin
+> muestra el set de instrumentos heredado de MiniHUD sin reestilizar.
+> Los instrumentos específicos de RC están en construcción (ver más
+> abajo).
 
-1. An airspeed indicator with the usual V-speed zones
-2. a trim/control indicator of aileron/elevator/rudder trims as white
-   bars, and current control input as thicker white lines (useful if
-   you move your rudder with buttons instead of pedals)
-3. engine indicators for Throttle, Prop, and Mixture (drag to change)
-4. a flaps indicator (drag to change)
-5. an altitude indicator and vertical speed gauge
-6. a compass, with a wind speed/direction barb
+## Instrumentos
 
-The UI is meant to be minimal, so as to get out of your way while
-flying. The functionality is somewhat similar to "Scenic Flyer", but
-works on Mac and Linux. In design, it is somewhat similar to Microsoft
-Flight Simulator 2020's instrument overlay.
+### Actuales (heredados de MiniHUD)
 
-### Configuration
+De izquierda a derecha:
 
-You can drag and drop the MiniHUD to a different place on the screen, 
-and you can resize it by dragging on one of its corners.
+1. Indicador de velocidad con zonas de V-speeds.
+2. Indicador de trim/control de alerón, elevador y timón.
+3. Indicadores de motor: Throttle, Prop y Mixture (arrastrables).
+4. Indicador de flaps (arrastrable).
+5. Altímetro y variómetro.
+6. Brújula con barba de viento.
 
-Bind a button to miniHUD → show/hide miniHUD to switch the HUD on or
-off.
+### Planeados (capa RC)
 
-### Installation
+- [ ] Altura **AGL** (sobre el terreno, no MSL).
+- [ ] **Batería + tiempo de vuelo restante** (eléctricos) / **combustible**.
+- [ ] **Distancia y rumbo al punto de despegue / piloto**.
+- [ ] **Viento relativo a la pista/campo**.
+- [ ] **Auxiliar de orientación del modelo** (¿viene o se aleja?).
+- [ ] **Anunciadores de advertencia**.
+- [ ] **Unidades configurables** (métrico km/h·m ↔ aviación kt·ft).
 
-Unzip the MiniHUD directory to X-Plane/Resources/Plugins. Your X-Plane
-directory should now contain
+## Uso
+
+- Arrastra el HUD para reposicionarlo; arrastra una esquina para
+  redimensionarlo.
+- Asigna un botón al comando **RCHud → show/hide RCHud**
+  (`RCHud/toggleHUD`) para mostrar/ocultar el HUD.
+
+## Instalación
+
+Copia la carpeta `RCHud` a `X-Plane 12/Resources/plugins`. La estructura
+debe quedar así:
 
 <pre>
 📂 X-Plane 12
 └ 📂 Resources
   └ 📂 plugins
-    └ 📂 MiniHUD
+    └ 📂 RCHud
       ├ 📁 64
       ├ 📁 data
-      ├ 📁 liblinux
+      ├ 📁 liblinux   (o libmac / libwin según plataforma)
       └ 📄 README.md</pre>
 
-### Compatibility
+> **Nota para desarrolladores:** este repositorio versiona únicamente el
+> código Lua de autor (`data/modules/`) y la documentación. El runtime
+> de SASL y los binarios (`64/`, `data/api`, `data/init`,
+> `data/components`, librerías nativas) provienen del paquete SASL y se
+> superponen al empaquetar — no están en git.
 
-MiniHUD works in X-Plane 11 and 12, on Windows, macOS (Intel+ARM), and Linux.
+## Compatibilidad
 
-### Changelog
+Construido sobre SASL, igual que MiniHUD: X-Plane 11 y 12, en Windows,
+macOS (Intel + ARM) y Linux.
 
-- v1.3.0 (29-10-2024)  
-  Allow resizing of the MiniHUD (Thank you, TreeBaron!)
+## Créditos
 
-### License
+- **MiniHUD** — base del proyecto. Copyright (C) 2023 Bastian Bechtold.
+  Redimensionado por TreeBaron.
+- **SASL** — framework de scripting/avionics (1-sim) sobre el que corre
+  el plugin.
 
-MiniHUD  
-Copyright (C) 2023 Bastian Bechtold
+## Licencia
 
-This program is free software: you can redistribute it and/or modify
-it under the terms of the GNU General Public License as published by
-the Free Software Foundation, either version 3 of the License, or (at
-your option) any later version.
+RCHud
+Copyright (C) 2026 Juan Luis Gabriel
 
-This program is distributed in the hope that it will be useful, but
-WITHOUT ANY WARRANTY; without even the implied warranty of
-MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE. See the GNU
-General Public License for more details.
+Derivado de MiniHUD, Copyright (C) 2023 Bastian Bechtold.
 
-See <https://www.gnu.org/licenses/> for a full copy of the GNU General
-Public License.
+Este programa es software libre: puedes redistribuirlo y/o modificarlo
+bajo los términos de la Licencia Pública General GNU publicada por la
+Free Software Foundation, en su versión 3 o (a tu elección) cualquier
+versión posterior.
+
+Se distribuye con la esperanza de que sea útil, pero SIN NINGUNA
+GARANTÍA; ni siquiera la garantía implícita de COMERCIABILIDAD o
+IDONEIDAD PARA UN PROPÓSITO PARTICULAR. Consulta la Licencia Pública
+General GNU para más detalles.
+
+Ver el archivo [LICENSE](../LICENSE) o
+<https://www.gnu.org/licenses/> para el texto completo.

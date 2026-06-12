@@ -1,3 +1,10 @@
+-- RCHud — panel de instrumentos (dibujo del HUD)
+-- Copyright (C) 2026 Juan Luis Gabriel
+-- Derivado de MiniHUD, Copyright (C) 2023 Bastian Bechtold
+--
+-- Programa libre bajo GPLv3 o posterior (ver LICENSE).
+-- Distribuido SIN GARANTÍA. Ver <https://www.gnu.org/licenses/>.
+
 local sourceCodePro = sasl.gl.loadFont("fonts/SourceCodePro.ttf")
 local white = {1.0, 1.0, 1.0, 1.0}
 local green = {0.2, 0.9, 0.2, 1.0}
