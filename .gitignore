@@ -20,6 +20,9 @@ RCHud/data/api/
 RCHud/data/init/
 RCHud/data/components/
 
+# --- Estado generado por SASL en runtime (no versionar) ---
+RCHud/data/modules/state.txt
+
 # --- Artefactos de empaquetado ---
 *.zip
 *.xpl
