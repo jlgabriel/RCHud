@@ -12,8 +12,6 @@ Inspired by the Aerofly RC overlay and built on top of
 [MiniHUD](https://github.com/bastibe/MiniHUD) by Bastian Bechtold (SASL,
 GPLv3).
 
-> 📷 _Screenshot of the HUD in flight — to be added._
-
 > **Status: v0.1.0.** Functional HUD, verified in flight across several
 > models (piston, turbofan with N1, jet without N1). The right-third
 > **map** panel is reserved for a future version.
