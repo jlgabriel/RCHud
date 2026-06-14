@@ -26,9 +26,23 @@ Este es el **repositorio de desarrollo**. El plugin en sí vive en
 
 ## Estado
 
-Desarrollo temprano (v0.1.0). Hecho: base renombrada y funcionando,
-documentada. Siguiente: reestilizar al look vectorial RC + primeros
-instrumentos RC (AGL, energía, home). Ver el plan por fases en el brief.
+**v0.1.0** — HUD funcional y verificado en vuelo. Estación de control en
+tierra con franja horizontal a todo el ancho:
+
+- Altura **AGL** con cinta, línea de tierra y variómetro.
+- **Velocidad** y **potencia** como diales circulares (potencia = RPM /
+  %N1 / % gases según el tipo de motor).
+- **Actitud (ADI)** azul/café y **brújula norte-arriba** con silueta del
+  modelo.
+- **Tren** en planta real con color por estado (abajo / tránsito / arriba)
+  y **flaps** con porcentaje.
+- Menú **Plugins ▸ RCHud** (Show HUD / Units / Opacity / Background) +
+  comandos asignables a la emisora; **unidades** métrico ↔ aviación;
+  **opacidad** y **panel de fondo** ajustables; preferencias persistentes.
+
+Siguiente (en hold): panel de **mapa** del tercio derecho (pista cercana /
+punto "home"), viento relativo a pista y anunciadores. Ver el plan por
+fases en el brief.
 
 ## Licencia
 
