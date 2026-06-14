@@ -20,8 +20,11 @@ RCHud/data/api/
 RCHud/data/init/
 RCHud/data/components/
 
-# --- Estado generado por SASL en runtime (no versionar) ---
+# --- Estado generado en runtime (no versionar) ---
+# state.txt = estado de ventanas de SASL
 RCHud/data/modules/state.txt
+# rchud_settings.lua = settings del usuario (visibilidad/unidades/opacidad/fondo)
+RCHud/data/modules/rchud_settings.lua
 
 # --- Artefactos de empaquetado ---
 *.zip

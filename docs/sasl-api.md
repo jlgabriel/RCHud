@@ -119,9 +119,17 @@ el bloque de actitud en `instrumentpanel.lua`.
 |---|---|
 | `globalPropertyf("ruta/dataref")` | Handle de dataref float. |
 | `globalPropertyi(...)` / `globalPropertys(...)` | Variantes int / string. |
+| `globalPropertyfa("ruta", len)` | **(verificada)** Dataref de **array** float. `get(prop)` devuelve una **tabla 1-based**; motor 0 = `[1]`. |
 | `createGlobalPropertys("ruta", valor)` | Crear propiedad propia (p. ej. versión). |
 | `get(prop)` / `set(prop, v)` | Leer / escribir. |
 | `sasl.getXPVersion()` | Versión XP (p. ej. `>= 12000`). Usado para elegir dataref de flaps. |
+
+> ⚠️ **Datarefs de array (aprendido en RCHud):** pasar un índice a
+> `globalPropertyf("ruta", i)` **NO** indexa el array — devuelve `0` sin error.
+> Para leer un elemento hay que usar `globalPropertyfa("ruta", len)` y luego
+> `get(prop)[1]` (tabla **1-based**, motor 0 = índice 1). Confirmado con
+> `engine_speed_rpm` y `N1_percent` (ambos daban 0 con el índice; con
+> `globalPropertyfa` el RPM leyó 1754 en un bimotor de hélice).
 
 ## Ventana, comandos, ratón (de `main.lua`)
 
