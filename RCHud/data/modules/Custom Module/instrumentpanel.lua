@@ -80,6 +80,10 @@ local altitudeAGLProp = globalPropertyf("sim/flightmodel/position/y_agl")
 local magHeadingProp = globalPropertyf("sim/flightmodel/position/mag_psi")  -- heading (nose), magnetic
 local pitchProp = globalPropertyf("sim/flightmodel/position/theta")  -- pitch: + nose up
 local rollProp  = globalPropertyf("sim/flightmodel/position/phi")    -- roll: + right wing down
+-- 0 at the main menu (no flight), >0 once a flight has started. A "time"
+-- dataref, so reading it is safe before the position is set; update() uses it
+-- to flag localState.simStarted and draw() skips entirely until then.
+local flightTimeProp = globalPropertyf("sim/time/total_flight_time_sec")
 -- Engine power. engine_speed_rpm and N1_percent are ARRAY datarefs; reading them
 -- with an index in globalPropertyf returned 0 in this build, so we use the array
 -- accessor globalPropertyfa (get -> table, engine 0 = [1]). If that function does
@@ -283,6 +287,10 @@ local lastScreenW, lastScreenH = 0, 0
 local lastAcf = nil
 
 function update()
+    -- A flight is "started" once total_flight_time_sec > 0; at the main menu it is
+    -- 0 and the aircraft position is unset. Share it via localState so draw() can
+    -- gate on it without adding an upvalue (draw() already references localState).
+    get(localState).simStarted = (get(flightTimeProp) or 0) > 0
     -- when the aircraft changes, reset the learned state (do not carry over from
     -- the previous one: RPM scale, N1 detection and everything learned about the gear)
     local acf = get(acfIdProp)
@@ -318,6 +326,10 @@ end
 -- HUD drawing
 ------------------------------------------------------------------------
 function draw()
+    -- Until a flight has started the aircraft position is unset; reading position
+    -- datarefs then makes SASL flood the log with "Sim is not yet started -
+    -- Position is unset". Nothing to show at the main menu anyway, so skip it all.
+    if not get(localState).simStarted then return end
     --------------------------------------------------------------------
     -- Instrument cluster layout (logical px, y-up in the 1600x270 canvas).
     -- Declared as LOCALS here (not file-level upvalues) so draw() stays under
