@@ -1,17 +1,17 @@
 # =============================================================
 #  RCHud — .gitignore
-#  Filosofía: el repo versiona SOLO nuestro código Lua de autor
-#  (RCHud/data/modules/) + documentación. El runtime de SASL y los
-#  binarios .xpl NO son nuestro código: se obtienen del paquete SASL
-#  y se superponen al empaquetar. Igual que hace el repo de MiniHUD.
+#  Philosophy: the repo versions ONLY our own author Lua code
+#  (RCHud/data/modules/) + documentation. The SASL runtime and the
+#  .xpl binaries are NOT our code: they come from the SASL package
+#  and are overlaid when packaging. Same as the MiniHUD repo does.
 # =============================================================
 
-# --- Paquete de referencia original (solo local, no versionar) ---
+# --- Original reference package (local only, do not version) ---
 /MiniHUD/
 /MiniHUD.zip
 
-# --- Runtime / framework de SASL dentro del plugin RCHud ---
-#     (no es código nuestro; se distribuye con el paquete SASL)
+# --- SASL runtime / framework inside the RCHud plugin ---
+#     (not our code; shipped with the SASL package)
 RCHud/64/
 RCHud/liblinux/
 RCHud/libmac/
@@ -20,17 +20,18 @@ RCHud/data/api/
 RCHud/data/init/
 RCHud/data/components/
 
-# --- Estado generado en runtime (no versionar) ---
-# state.txt = estado de ventanas de SASL
+# --- State generated at runtime (do not version) ---
+# state.txt = SASL window state
 RCHud/data/modules/state.txt
-# rchud_settings.lua = settings del usuario (visibilidad/unidades/opacidad/fondo)
+# rchud_settings.lua = user settings (visibility/units/opacity/background)
 RCHud/data/modules/rchud_settings.lua
 
-# --- Artefactos de empaquetado ---
+# --- Packaging output ---
+/dist/
 *.zip
 *.xpl
 
-# --- Sistema operativo / editores ---
+# --- OS / editors ---
 .DS_Store
 Thumbs.db
 desktop.ini
