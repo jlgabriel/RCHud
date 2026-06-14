@@ -1,190 +1,239 @@
-# HUD Overlay RC para X-Plane 12 — Brief de proyecto
+# RC HUD Overlay for X-Plane 12 — project brief
 
-> Documento de trabajo para desarrollar en Claude Code.
-> Proyecto libre y de código abierto (GPLv3).
-
----
-
-## 1. Objetivo
-
-Construir un **HUD overlay** para X-Plane 12 orientado a **vuelo RC** (aviones radiocontrol), que muestre la información de vuelo relevante sobre la pantalla cuando se vuela en vista externa, sin depender de la cabina del avión.
-
-Inspirado en el overlay de **Aerofly RC**, pero **no** una copia: el diseño se adapta a lo que un piloto RC realmente necesita y a las capacidades de X-Plane 12.
-
-Caso de uso de referencia: usarlo junto a flotas como **VSKYLABS RC-Elements (RCE)** para X-Plane 12 (eléctricos, glow, turbinas, helicópteros, VTOL).
+> Working document for development in Claude Code.
+> Free and open-source project (GPLv3).
 
 ---
 
-## 2. Contexto y referencias
+## 1. Goal
 
-- **Aerofly RC** — referencia de la *idea* (overlay minimalista vectorial: dial de velocidad, rosa de rumbo, variómetro, bloque de altitud/tiempo). No es el objetivo replicarlo tal cual.
-- **VSKYLABS RC-Elements Vol.1** — add-on comercial de aviones RC giant-scale sobre X-Plane 12. Mercado/uso de referencia.
-- **MiniHUD** (`github.com/bastibe/MiniHUD`) — **base del proyecto** (ver sección 4).
+Build a **HUD overlay** for X-Plane 12 aimed at **RC flight** (radio-
+controlled aircraft), showing the relevant flight information over the
+screen when flying in external view, without relying on the aircraft's
+cockpit.
+
+Inspired by the **Aerofly RC** overlay, but **not** a copy: the design is
+adapted to what an RC pilot actually needs and to the capabilities of
+X-Plane 12.
+
+Reference use case: using it alongside fleets like **VSKYLABS RC-Elements
+(RCE)** for X-Plane 12 (electric, glow, turbine, helicopters, VTOL).
 
 ---
 
-## 3. Decisiones tomadas (y por qué)
+## 2. Context and references
 
-| Decisión | Elección | Justificación |
+- **Aerofly RC** — reference for the *idea* (minimal vectorial overlay:
+  airspeed dial, heading rose, vertical-speed indicator, altitude/time
+  block). The goal is not to replicate it as-is.
+- **VSKYLABS RC-Elements Vol.1** — commercial add-on of giant-scale RC
+  aircraft for X-Plane 12. Reference market/use.
+- **MiniHUD** (`github.com/bastibe/MiniHUD`) — **the basis of the project**
+  (see section 4).
+
+---
+
+## 3. Decisions made (and why)
+
+| Decision | Choice | Rationale |
 |---|---|---|
-| Punto de partida | **Forkear MiniHUD** | Ya resuelve overlay arrastrable/redimensionable, multiplataforma, con instrumentos vectoriales minimalistas. No reinventar el andamiaje. |
-| Framework | **SASL** (el que ya usa MiniHUD) | Al forkear algo que funciona, la fricción de SASL ya está pagada. Plugin autocontenido, sin recompilar binarios. |
-| Lenguaje | **Lua** (sobre SASL) | Es lo que trae MiniHUD; editable y legible. |
-| Licencia | **GPLv3** | MiniHUD es GPLv3; como el proyecto es libre y abierto, mantenerlo GPLv3 no es obstáculo, es coherente. |
-| Descartado | FlyWithLua / XPPython3 desde cero | Buenos para hobby desde cero, pero aquí ya tenemos una base SASL funcionando. |
+| Starting point | **Fork MiniHUD** | It already solves a draggable/resizable overlay, cross-platform, with minimal vectorial instruments. Don't reinvent the scaffolding. |
+| Framework | **SASL** (the one MiniHUD already uses) | By forking something that works, the SASL friction is already paid. Self-contained plugin, no recompiling binaries. |
+| Language | **Lua** (on SASL) | It's what MiniHUD ships with; editable and readable. |
+| License | **GPLv3** | MiniHUD is GPLv3; since the project is free and open, keeping it GPLv3 is no obstacle — it's consistent. |
+| Discarded | FlyWithLua / XPPython3 from scratch | Good for a hobby from scratch, but here we already have a working SASL base. |
 
-**Nota sobre la "filosofía haiku":** mantener el overlay mínimo y limpio. Cada instrumento debe justificar su lugar en pantalla; si no aporta a un piloto RC de un vistazo, no va.
+**Note on the "haiku philosophy":** keep the overlay minimal and clean.
+Every instrument must justify its place on screen; if it doesn't help an RC
+pilot at a glance, it's out.
 
 ---
 
-## 4. Base técnica: MiniHUD / SASL
+## 4. Technical base: MiniHUD / SASL
 
-### Qué es
-Plugin de X-Plane (XP11/12; Win, macOS Intel+ARM, Linux) que dibuja un panel pequeño de instrumentos para volar sin ver la cabina. Arrastrable y redimensionable. GPLv3.
+### What it is
+An X-Plane plugin (XP11/12; Win, macOS Intel+ARM, Linux) that draws a small
+instrument panel for flying without seeing the cockpit. Draggable and
+resizable. GPLv3.
 
-### Estructura del paquete
+### Package structure
 ```
 MiniHUD/
-├─ 64/            # núcleo SASL compilado (.xpl) — runtime, NO es código del autor
+├─ 64/            # compiled SASL core (.xpl) — runtime, NOT author's code
 ├─ data/
-│  └─ modules/    # código Lua del autor (los instrumentos) ← AQUÍ se trabaja
-├─ liblinux/      # libs nativas de SASL (+ libmac/ libwin equivalentes)
+│  └─ modules/    # author's Lua code (the instruments) ← work HERE
+├─ liblinux/      # SASL native libs (+ libmac/ libwin equivalents)
 ├─ README.md
-└─ compress.sh    # posible script de empaquetado de módulos
+└─ compress.sh    # possible module-packaging script
 ```
 
-### Punto clave (resuelto)
-- Los **binarios** del paquete descargado son el **runtime de SASL**, no código del autor. Por eso el repo solo versiona el Lua y el zip trae además los binarios. Es la práctica normal.
-- **No se tocan ni recompilan los binarios.** Se edita solo el Lua en `data/modules/`; SASL lo re-ejecuta al reiniciar X-Plane. **Cero toolchain de C/C++.**
-- **A verificar al abrir el paquete:** si los archivos de `data/modules` son `.lua` planos (editables directo) o vienen empacados/compilados (en ese caso, tomar los `.lua` fuente del repo y reemplazar).
+### Key point (resolved)
+- The **binaries** in the downloaded package are the **SASL runtime**, not
+  author's code. That's why the repo only versions the Lua and the zip also
+  ships the binaries. This is the normal practice.
+- **The binaries are never touched or recompiled.** Only the Lua in
+  `data/modules/` is edited; SASL re-runs it when X-Plane restarts. **Zero
+  C/C++ toolchain.**
+- **To check when opening the package:** whether the files in `data/modules`
+  are plain `.lua` (directly editable) or packed/compiled (in which case,
+  take the source `.lua` from the repo and replace).
 
-### Dibujo
-- API de gráficos 2D propia de SASL.
-- **Transparencia:** no se rellena el fondo; solo se dibujan las líneas del instrumento y el resto queda viendo la escena. La transparencia "sale gratis".
-
----
-
-## 5. Estilo visual
-
-Objetivo estético: **línea vectorial fina, anti-aliased, blanca**, con acentos de color muy puntuales (aguja roja, arco de rango verde). La calidad depende del AA, el halo y la tipografía, no del framework.
-
-### Legibilidad sobre fondo variable (cielo / pasto / pista)
-Problema central de un HUD RC: una línea blanca desaparece sobre una nube; una oscura, sobre asfalto en sombra.
-
-**Técnica estándar:** dibujar cada elemento **dos veces**:
-1. Primero un trazo algo más grueso en **negro semitransparente** (rgba ~0,0,0,0.5) como halo/contorno.
-2. Encima, el trazo blanco.
-
-Para bloques de texto, alternativa más barata: un *scrim* oscuro muy tenue detrás (rectángulo negro ~25% alfa).
-
-### Construcción de un dial (patrón)
-1. Definir rango angular (p. ej. ~270°) y función `valor → ángulo`.
-2. Dibujar ticks: líneas radiales (largas para mayores, cortas para menores).
-3. Etiquetas numéricas hacia adentro de cada tick mayor.
-4. Arco de rango (color) como segmentos cortos pegados al borde.
-5. Aguja: línea/triángulo desde el centro, rotada al ángulo del valor.
-
-**Rendimiento:** con pocos instrumentos, redibujar todo cada frame es barato. Si crece, cachear las partes estáticas (ticks, números) a textura y redibujar en vector solo lo que se mueve.
+### Drawing
+- SASL's own 2D graphics API.
+- **Transparency:** the background is not filled; only the instrument lines
+  are drawn and the rest shows the scene through. Transparency "comes for
+  free".
 
 ---
 
-## 6. Instrumentos
+## 5. Visual style
 
-### Set actual de MiniHUD (heredado)
-- Velocidad con zonas de V-speeds
-- Indicador de trim/control (aileron/elevator/rudder + input actual)
+Aesthetic goal: **thin, anti-aliased, white vectorial line**, with very
+sparing color accents (red needle, green range arc). The quality depends on
+AA, the halo and the typography, not on the framework.
+
+### Legibility over a varying background (sky / grass / runway)
+The central problem of an RC HUD: a white line disappears over a cloud; a
+dark one, over asphalt in shadow.
+
+**Standard technique:** draw each element **twice**:
+1. First a slightly thicker stroke in **semi-transparent black** (rgba
+   ~0,0,0,0.5) as a halo/outline.
+2. On top, the white stroke.
+
+For text blocks, a cheaper alternative: a very faint dark *scrim* behind it
+(black rectangle ~25% alpha).
+
+### Building a dial (pattern)
+1. Define the angular range (e.g. ~270°) and a `value → angle` function.
+2. Draw ticks: radial lines (long for majors, short for minors).
+3. Numeric labels inward from each major tick.
+4. Range arc (color) as short segments hugging the edge.
+5. Needle: line/triangle from the center, rotated to the value's angle.
+
+**Performance:** with few instruments, redrawing everything each frame is
+cheap. If it grows, cache the static parts (ticks, numbers) to a texture and
+redraw in vector only what moves.
+
+---
+
+## 6. Instruments
+
+### Current MiniHUD set (inherited)
+- Airspeed with V-speed zones
+- Trim/control indicator (aileron/elevator/rudder + current input)
 - Throttle / Prop / Mixture
 - Flaps
-- Altitud + variómetro
-- Brújula con barba de viento
+- Altitude + vertical speed
+- Compass with wind barb
 
-### Capa de diseño RC (lo "adecuado para X-Plane")
-El vuelo RC es de **línea de vista desde el suelo**: el overlay no debe imitar un glass cockpit completo, sino dar lo que el piloto RC necesita de un vistazo.
+### RC design layer (what's "right for X-Plane")
+RC flight is **line-of-sight from the ground**: the overlay shouldn't mimic
+a full glass cockpit, but give what the RC pilot needs at a glance.
 
-A **agregar / priorizar**:
-- [ ] **Altura AGL** (no ASL): los modelos vuelan bajo.
-- [ ] **Batería + tiempo de vuelo restante** (eléctricos); **combustible** para glow/turbina.
-- [ ] **Distancia y rumbo al punto de despegue / piloto**: los modelos se alejan y se hacen diminutos.
-- [ ] **Viento relativo a la pista/campo**.
-- [ ] **Auxiliar de orientación del modelo** (silueta/flecha: ¿viene hacia mí o se aleja?). *Problema nº1 del RC.*
-- [ ] **Anunciadores de advertencia** (encajan con el Test-Pilot Mode de RCE: fallas, sobre-estrés, etc.).
+To **add / prioritize**:
+- [ ] **AGL height** (not ASL): models fly low.
+- [ ] **Battery + remaining flight time** (electric); **fuel** for
+  glow/turbine.
+- [ ] **Distance and bearing to the takeoff point / pilot**: models fly away
+  and become tiny.
+- [ ] **Wind relative to the runway/field**.
+- [ ] **Model-orientation aid** (silhouette/arrow: is it coming toward me or
+  going away?). *The #1 RC problem.*
+- [ ] **Warning annunciators** (fit RCE's Test-Pilot Mode: failures,
+  over-stress, etc.).
 
-A **conservar** de MiniHUD:
-- Indicador de trim/control (útil volando con transmisora).
-- Velocidad, altitud, variómetro, brújula (reestilizados).
+To **keep** from MiniHUD:
+- Trim/control indicator (useful when flying with a transmitter).
+- Airspeed, altitude, vertical speed, compass (restyled).
 
-A **evaluar/quitar**: lo que no aporte a un piloto RC (revisar caso a caso).
+To **evaluate/remove**: anything that doesn't help an RC pilot (review
+case by case).
 
 ---
 
-## 7. Datarefs candidatos (verificar strings exactos)
+## 7. Candidate datarefs (verify exact strings)
 
-> Son candidatos estándar de X-Plane; confirmar nombres y unidades en sesión. Algunos (batería/combustible) pueden variar por modelo en RCE.
+> These are standard X-Plane candidates; confirm names and units in a
+> session. Some (battery/fuel) may vary by model in RCE.
 
-- Velocidad: `sim/flightmodel/position/indicated_airspeed`
-- Altitud MSL: `sim/flightmodel/position/elevation` (m)
-- Altura AGL: `sim/flightmodel/position/y_agl` (m)
-- Variómetro: `sim/flightmodel/position/vh_ind_fpm`
-- Rumbo: `sim/flightmodel/position/mag_psi` / `true_psi`
-- Posición: `sim/flightmodel/position/latitude`, `.../longitude` (para distancia/rumbo a "home")
-- Viento: revisar familia `sim/weather/aircraft/wind_*` (a verificar)
+- Airspeed: `sim/flightmodel/position/indicated_airspeed`
+- MSL altitude: `sim/flightmodel/position/elevation` (m)
+- AGL height: `sim/flightmodel/position/y_agl` (m)
+- Vertical speed: `sim/flightmodel/position/vh_ind_fpm`
+- Heading: `sim/flightmodel/position/mag_psi` / `true_psi`
+- Position: `sim/flightmodel/position/latitude`, `.../longitude` (for
+  distance/bearing to "home")
+- Wind: check the `sim/weather/aircraft/wind_*` family (to verify)
 - Throttle: `sim/cockpit2/engine/actuators/throttle_ratio_all`
-- Batería/combustible: **a verificar por aeronave** (eléctrico vs glow vs turbina)
-- Superficies de control / trim: familia `sim/cockpit2/controls/*` y `sim/flightmodel2/controls/*`
+- Battery/fuel: **to verify per aircraft** (electric vs glow vs turbine)
+- Control surfaces / trim: `sim/cockpit2/controls/*` and
+  `sim/flightmodel2/controls/*` families
 
-**"Home" para distancia/rumbo:** decidir si se autodetecta el punto de despegue o se fija con un *command* asignable (recomendado: command "set home point").
+**"Home" for distance/bearing:** decide whether the takeoff point is
+auto-detected or set with a bindable *command* (recommended: a "set home
+point" command).
 
 ---
 
-## 8. Plan de desarrollo (para Claude Code)
+## 8. Development plan (for Claude Code)
 
-### Fase 0 — Setup
-- [ ] Copiar el MiniHUD descargado a un directorio de trabajo; `git init`; commit base intacto.
-- [ ] Confirmar que es SASL (estructura `64/` + `data/modules/` + `liblinux/`).
-- [ ] Verificar si `data/modules` es `.lua` plano o empacado (definir flujo de edición).
+### Phase 0 — Setup
+- [ ] Copy the downloaded MiniHUD to a working directory; `git init`; commit
+  the intact base.
+- [ ] Confirm it's SASL (structure `64/` + `data/modules/` + `liblinux/`).
+- [ ] Check whether `data/modules` is plain `.lua` or packed (define the
+  editing flow).
 
-### Fase 1 — Entender la base
-- [ ] Inventariar componentes: mapear cada instrumento → su archivo Lua.
-- [ ] Documentar la API de dibujo SASL que usa (primitivas, colores, texto, transformaciones).
-- [ ] Validar el loop de iteración: editar un valor trivial → reiniciar XP → ver el cambio.
+### Phase 1 — Understand the base
+- [ ] Inventory the components: map each instrument → its Lua file.
+- [ ] Document the SASL drawing API it uses (primitives, colors, text,
+  transforms).
+- [ ] Validate the iteration loop: edit a trivial value → restart XP → see
+  the change.
 
-### Fase 2 — Reestilizar al look vectorial RC
-- [ ] Implementar el helper de **halo de legibilidad** (negro semitransparente debajo, blanco encima).
-- [ ] Reestilizar los gauges conservados al estilo línea fina.
+### Phase 2 — Restyle to the RC vectorial look
+- [ ] Implement the **legibility-halo** helper (semi-transparent black
+  below, white on top).
+- [ ] Restyle the kept gauges to the thin-line style.
 
-### Fase 3 — Instrumentos RC
+### Phase 3 — RC instruments
 - [ ] AGL
-- [ ] Batería + tiempo restante / combustible
-- [ ] Distancia + rumbo a "home" (con command para fijar home)
-- [ ] Viento relativo a pista
-- [ ] Auxiliar de orientación del modelo
-- [ ] Anunciadores de advertencia
+- [ ] Battery + remaining time / fuel
+- [ ] Distance + bearing to "home" (with a command to set home)
+- [ ] Wind relative to the runway
+- [ ] Model-orientation aid
+- [ ] Warning annunciators
 
-### Fase 4 — Configuración y robustez
-- [ ] Reusar drag/resize de MiniHUD.
-- [ ] Config: qué instrumentos mostrar, unidades (km/h vs kt, m vs ft).
-- [ ] Manejo elegante de datarefs ausentes según modelo (eléctrico vs turbina).
+### Phase 4 — Configuration and robustness
+- [ ] Reuse MiniHUD's drag/resize.
+- [ ] Config: which instruments to show, units (km/h vs kt, m vs ft).
+- [ ] Graceful handling of missing datarefs depending on the model (electric
+  vs turbine).
 
-### Fase 5 — Pruebas y publicación
-- [ ] Probar en varias aeronaves RCE (eléctrico, turbina, heli).
-- [ ] README + créditos a MiniHUD (Bastian Bechtold) y a SASL.
-- [ ] Publicar bajo **GPLv3**.
-
----
-
-## 9. Preguntas abiertas
-
-1. ¿`data/modules` viene en `.lua` plano o empacado?
-2. Unidades por defecto: ¿métrico (km/h, m) como Aerofly, o configurable?
-3. "Home" para distancia/rumbo: ¿autodetección de despegue o command manual?
-4. ¿Cuál aeronave RCE como primer objetivo de prueba?
-5. ¿Cómo exponen RCE la batería/combustible por modelo? (mapear datarefs reales)
+### Phase 5 — Testing and release
+- [ ] Test across several RCE aircraft (electric, turbine, heli).
+- [ ] README + credits to MiniHUD (Bastian Bechtold) and SASL.
+- [ ] Release under **GPLv3**.
 
 ---
 
-## 10. Restricciones y licencia
+## 9. Open questions
 
-- **Licencia: GPLv3** (heredada de MiniHUD). Mantener el fork GPLv3; acreditar autor original y SASL.
-- **No recompilar binarios**: solo se edita Lua en `data/modules`.
-- Verificar términos de licencia de **SASL** para distribución (uso libre/abierto; confirmar).
-- Mantener el overlay **mínimo y limpio**: cada instrumento debe ganarse su lugar.
+1. Does `data/modules` come as plain `.lua` or packed?
+2. Default units: metric (km/h, m) like Aerofly, or configurable?
+3. "Home" for distance/bearing: takeoff auto-detection or a manual command?
+4. Which RCE aircraft as the first test target?
+5. How do RCE aircraft expose battery/fuel per model? (map the real
+   datarefs)
+
+---
+
+## 10. Constraints and license
+
+- **License: GPLv3** (inherited from MiniHUD). Keep the fork GPLv3; credit
+  the original author and SASL.
+- **No recompiling binaries**: only the Lua in `data/modules` is edited.
+- Verify **SASL** license terms for distribution (free/open use; confirm).
+- Keep the overlay **minimal and clean**: every instrument must earn its
+  place.

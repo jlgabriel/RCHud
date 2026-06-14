@@ -1,157 +1,156 @@
-# API de dibujo SASL — referencia de trabajo
+# SASL drawing API — working reference
 
-Notas sobre las primitivas `sasl.gl.*` y los helpers de SASL que usa
-RCHud. Las firmas marcadas **(verificada)** están confirmadas por el uso
-real en `instrumentpanel.lua`; las marcadas **(disponible)** existen en
-el runtime pero hay que confirmar su firma exacta antes de usarlas.
+Notes on the `sasl.gl.*` primitives and SASL helpers that RCHud uses.
+Signatures marked **(verified)** are confirmed by real use in
+`instrumentpanel.lua`; those marked **(available)** exist in the runtime
+but their exact signature should be confirmed before use.
 
-## Sistema de coordenadas
+## Coordinate system
 
-- Origen **abajo-izquierda**, eje **Y hacia arriba** (estilo OpenGL/X-Plane).
-- Las coordenadas dentro de un componente son **locales** al componente.
-- RCHud (heredado de MiniHUD) define una unidad virtual:
+- Origin at **bottom-left**, **Y axis pointing up** (OpenGL/X-Plane style).
+- Coordinates inside a component are **local** to the component.
+- RCHud (inherited from MiniHUD) defines a virtual unit:
   ```lua
-  local px = mainFrameHeight * 0.01   -- 1 "px" = 1% del alto del marco
+  local px = mainFrameHeight * 0.01   -- 1 "px" = 1% of the frame height
   ```
-  Dibujar todo en múltiplos de `px` hace que el HUD escale solo al
-  redimensionar la ventana. **Regla:** posiciones y tamaños en `px`, no
-  en píxeles absolutos.
-- Colores: tabla `{r, g, b, a}` con floats `0.0..1.0`. La transparencia
-  es real (no se rellena fondo salvo scrims puntuales).
+  Drawing everything in multiples of `px` makes the HUD scale by itself
+  when the window is resized. **Rule:** positions and sizes in `px`, not in
+  absolute pixels.
+- Colors: `{r, g, b, a}` table with floats `0.0..1.0`. Transparency is real
+  (no background is filled in, except for occasional scrims).
 
-## Texto
+## Text
 
-| Función | Firma | Notas |
+| Function | Signature | Notes |
 |---|---|---|
-| `sasl.gl.loadFont(path)` | `path` relativo al módulo → handle | Cargar una vez, fuera de `draw()`. |
-| `sasl.gl.drawText` | `(font, x, y, text, size, bold, italic, align, color)` | **(verificada)** `bold`/`italic` bool; `align` = `TEXT_ALIGN_LEFT \| _CENTER \| _RIGHT`. |
-| `sasl.gl.measureText` | `(font, text, size)` → ancho | **(disponible)** Para centrar y dimensionar scrims. |
-| `sasl.gl.drawRotatedText` | `(font, x, y, angle, ...)` | **(disponible)** Texto rotado sin tocar la matriz. |
+| `sasl.gl.loadFont(path)` | `path` relative to the module → handle | Load once, outside `draw()`. |
+| `sasl.gl.drawText` | `(font, x, y, text, size, bold, italic, align, color)` | **(verified)** `bold`/`italic` bool; `align` = `TEXT_ALIGN_LEFT \| _CENTER \| _RIGHT`. |
+| `sasl.gl.measureText` | `(font, text, size)` → width | **(available)** For centering and sizing scrims. |
+| `sasl.gl.drawRotatedText` | `(font, x, y, angle, ...)` | **(available)** Rotated text without touching the matrix. |
 
-> SASL **no** dibuja contorno/outline en el texto. Para legibilidad sobre
-> fondo variable: scrim oscuro detrás (rect `{0,0,0,~0.4}`) o, más caro,
-> redibujar el texto desplazado en negro y encima en blanco.
+> SASL does **not** draw an outline on text. For legibility over a varying
+> background: a dark scrim behind it (rect `{0,0,0,~0.4}`) or, more
+> expensive, redraw the text offset in black and on top in white.
 
-## Formas (verificadas en uso)
+## Shapes (verified in use)
 
-| Función | Firma | Notas |
+| Function | Signature | Notes |
 |---|---|---|
-| `drawRectangle` | `(x, y, w, h, color)` | Relleno. Base de barras, scrims, ticks. |
-| `drawFrame` | `(x, y, w, h, color)` | Solo contorno. |
-| `drawTriangle` | `(x1,y1, x2,y2, x3,y3, color)` | Relleno. Agujas/punteros. |
+| `drawRectangle` | `(x, y, w, h, color)` | Filled. Basis for bars, scrims, ticks. |
+| `drawFrame` | `(x, y, w, h, color)` | Outline only. |
+| `drawTriangle` | `(x1,y1, x2,y2, x3,y3, color)` | Filled. Needles/pointers. |
 | `drawCircle` | `(x, y, radius, filled, color)` | `filled` bool. |
-| `drawLine` | `(x1,y1, x2,y2, color)` | Línea de 1 px de grosor. |
-| `drawPolyLine` | `({x1,y1, x2,y2, ...}, color)` | Polilínea abierta (lista plana de coords). |
+| `drawLine` | `(x1,y1, x2,y2, color)` | 1 px wide line. |
+| `drawPolyLine` | `({x1,y1, x2,y2, ...}, color)` | Open polyline (flat coordinate list). |
 
-## Formas con grosor — clave para el look vectorial RC (disponibles)
+## Thick shapes — key for the RC vectorial look (available)
 
-El estilo objetivo es **línea fina anti-aliased con halo**. Para eso:
+The target style is a **thin anti-aliased line with a halo**. For that:
 
-| Función | Uso previsto |
+| Function | Intended use |
 |---|---|
-| `drawWideLine` | Línea de grosor controlable. Confirmar firma (`x1,y1,x2,y2,width,color`?). |
-| `drawWidePolyLine` | Polilínea con grosor. |
-| `drawArc` / `drawArcLine` | Arcos de rango de los diales (verde/amarillo/rojo) sin aproximar con rects. |
-| `drawAngle` | Sector angular. |
-| `drawBezierLine*` / `drawWideBezierLine*` | Curvas suaves si hiciera falta. |
+| `drawWideLine` | Line with controllable thickness. Confirm signature (`x1,y1,x2,y2,width,color`?). |
+| `drawWidePolyLine` | Polyline with thickness. |
+| `drawArc` / `drawArcLine` | Dial range arcs (green/yellow/red) without approximating with rects. |
+| `drawAngle` | Angular sector. |
+| `drawBezierLine*` / `drawWideBezierLine*` | Smooth curves if needed. |
 
-### Patrón de halo de legibilidad (a implementar como helper)
+### Legibility-halo pattern (to implement as a helper)
 
-Dibujar cada trazo **dos veces**:
-1. Primero, trazo más grueso en **negro semitransparente** `{0,0,0,0.5}` (halo).
-2. Encima, el trazo blanco fino.
+Draw each stroke **twice**:
+1. First, a slightly thicker stroke in **semi-transparent black**
+   `{0,0,0,0.5}` (halo).
+2. On top, the thin white stroke.
 
 ```lua
--- pseudo-helper, pendiente de confirmar firma de drawWideLine
+-- pseudo-helper, drawWideLine signature still to be confirmed
 local function haloLine(x1,y1,x2,y2, w, color)
     sasl.gl.drawWideLine(x1,y1,x2,y2, w+2, {0,0,0,0.5})  -- halo
-    sasl.gl.drawWideLine(x1,y1,x2,y2, w,   color)        -- trazo
+    sasl.gl.drawWideLine(x1,y1,x2,y2, w,   color)        -- stroke
 end
 ```
 
-## Transformaciones (matriz, componen — verificadas)
+## Transforms (matrix, they compose — verified)
 
-`setTranslateTransform`/`setRotateTransform` **se acumulan** (multiplican
-sobre la matriz actual), no son absolutas. Se acotan con save/restore:
+`setTranslateTransform`/`setRotateTransform` **accumulate** (they multiply
+onto the current matrix), they are not absolute. Bound them with
+save/restore:
 
 ```lua
 sasl.gl.saveGraphicsContext()
-sasl.gl.setTranslateTransform(cx, cy)   -- mueve el origen al centro
-sasl.gl.setRotateTransform(-heading)    -- rota
--- ... dibujar en coords locales al centro ...
+sasl.gl.setTranslateTransform(cx, cy)   -- move the origin to the center
+sasl.gl.setRotateTransform(-heading)    -- rotate
+-- ... draw in coordinates local to the center ...
 for i=1,12 do
-    sasl.gl.setRotateTransform(30)      -- ¡suma 30° cada vez! (relativo)
-    -- dibuja un tick
+    sasl.gl.setRotateTransform(30)      -- adds 30° each time! (relative)
+    -- draw a tick
 end
-sasl.gl.restoreGraphicsContext()        -- deshace translate+rotate
+sasl.gl.restoreGraphicsContext()        -- undoes translate+rotate
 ```
 
-> Confirmado en la brújula de MiniHUD: 12 llamadas a `setRotateTransform(30)`
-> reparten ticks cada 30° → la rotación es **relativa/compositiva**.
+> Confirmed on the MiniHUD compass: 12 calls to `setRotateTransform(30)`
+> spread ticks every 30° → the rotation is **relative/compositional**.
 
-## Texturas (perf, fase posterior — disponibles)
+## Textures (perf, later phase — available)
 
-`createTexture`, `drawTexture*`, `getGLVectorTexture`, etc. Si el número
-de instrumentos crece y redibujar todo en vector cada frame pesa, cachear
-las **partes estáticas** (ticks, números de un dial) a textura y redibujar
-en vector solo lo que se mueve (agujas). Con pocos instrumentos, redibujar
-todo cada frame es barato — no optimizar antes de tiempo.
+`createTexture`, `drawTexture*`, `getGLVectorTexture`, etc. If the number of
+instruments grows and redrawing everything in vector each frame becomes
+heavy, cache the **static parts** (ticks, a dial's numbers) to a texture and
+redraw in vector only what moves (needles). With few instruments, redrawing
+everything every frame is cheap — don't optimize prematurely.
 
-## Recorte a una región (aprendido)
+## Clipping to a region (learned)
 
-Existen `gl.drawMaskStart` / `gl.drawUnderMask` / `gl.drawMaskEnd`, pero en
-las pruebas del ADI **no recortaron** el relleno al disco (el contenido se
-dibujó sin clip). Hasta confirmar su uso correcto en el manual oficial
-(`https://1-sim.com/files/SASL3Manual.pdf`), **evitar depender de ellas**.
+`gl.drawMaskStart` / `gl.drawUnderMask` / `gl.drawMaskEnd` exist, but in the
+ADI tests they **did not clip** the fill to the disc (the content drew
+without a clip). Until their correct use is confirmed in the official manual
+(`https://1-sim.com/files/SASL3Manual.pdf`), **avoid depending on them**.
 
-**Técnica robusta usada en el ADI:** construir la geometría ya recortada
-en vez de enmascarar. Para rellenar un disco partido por una línea
-(horizonte): dibujar el círculo completo de un color y, encima, el
-**segmento circular** del otro color como un **abanico de triángulos**
-(`drawTriangle`) cuyos vértices están sobre el círculo. Así el relleno
-queda dentro del disco por construcción. La línea divisoria se dibuja del
-ancho exacto de la **cuerda** (`2·√(R²−d²)`) para que no sobresalga. Ver
-el bloque de actitud en `instrumentpanel.lua`.
+**Robust technique used in the ADI:** build the geometry already clipped
+instead of masking. To fill a disc split by a line (the horizon): draw the
+full circle in one color and, on top, the **circular segment** of the other
+color as a **triangle fan** (`drawTriangle`) whose vertices sit on the
+circle. That way the fill stays inside the disc by construction. The
+dividing line is drawn at the exact width of the **chord** (`2·√(R²−d²)`) so
+it doesn't stick out. See the attitude block in `instrumentpanel.lua`.
 
-## Propiedades / datarefs (helpers SASL)
+## Properties / datarefs (SASL helpers)
 
-| Helper | Uso |
+| Helper | Use |
 |---|---|
-| `globalPropertyf("ruta/dataref")` | Handle de dataref float. |
-| `globalPropertyi(...)` / `globalPropertys(...)` | Variantes int / string. |
-| `globalPropertyfa("ruta", len)` | **(verificada)** Dataref de **array** float. `get(prop)` devuelve una **tabla 1-based**; motor 0 = `[1]`. |
-| `createGlobalPropertys("ruta", valor)` | Crear propiedad propia (p. ej. versión). |
-| `get(prop)` / `set(prop, v)` | Leer / escribir. |
-| `sasl.getXPVersion()` | Versión XP (p. ej. `>= 12000`). Usado para elegir dataref de flaps. |
+| `globalPropertyf("path/dataref")` | Float dataref handle. |
+| `globalPropertyi(...)` / `globalPropertys(...)` | int / string variants. |
+| `globalPropertyfa("path", len)` | **(verified)** **Array** float dataref. `get(prop)` returns a **1-based** table; engine 0 = `[1]`. |
+| `createGlobalPropertys("path", value)` | Create your own property (e.g. version). |
+| `get(prop)` / `set(prop, v)` | Read / write. |
+| `sasl.getXPVersion()` | XP version (e.g. `>= 12000`). Used to pick the flaps dataref. |
 
-> ⚠️ **Datarefs de array (aprendido en RCHud):** pasar un índice a
-> `globalPropertyf("ruta", i)` **NO** indexa el array — devuelve `0` sin error.
-> Para leer un elemento hay que usar `globalPropertyfa("ruta", len)` y luego
-> `get(prop)[1]` (tabla **1-based**, motor 0 = índice 1). Confirmado con
-> `engine_speed_rpm` y `N1_percent` (ambos daban 0 con el índice; con
-> `globalPropertyfa` el RPM leyó 1754 en un bimotor de hélice).
+> ⚠️ **Array datarefs (learned in RCHud):** passing an index to
+> `globalPropertyf("path", i)` does **NOT** index the array — it returns `0`
+> with no error. To read an element you must use
+> `globalPropertyfa("path", len)` and then `get(prop)[1]` (**1-based**
+> table, engine 0 = index 1). Confirmed with `engine_speed_rpm` and
+> `N1_percent` (both returned 0 with the index; with `globalPropertyfa` the
+> RPM read 1754 on a twin-prop).
 
-## Ventana, comandos, ratón (de `main.lua`)
+## Window, commands, mouse (from `main.lua`)
 
-- `contextWindow({...})` crea la ventana overlay. Flags relevantes:
-  `noDecore`, `noBackground` (transparencia), `noResize=false`
-  (redimensionable), `layer = SASL_CW_LAYER_FLIGHT_OVERLAY`,
-  `proportional`, `gravity`.
-- `loadComponent("nombre")` carga el componente por nombre de archivo
-  (sin extensión); la carpeta contenedora ("Custom Module") no se
-  referencia por nombre.
+- `contextWindow({...})` creates the overlay window. Relevant flags:
+  `noDecore`, `noBackground` (transparency), `noResize=false` (resizable),
+  `layer = SASL_CW_LAYER_FLIGHT_OVERLAY`, `proportional`, `gravity`.
+- `loadComponent("name")` loads the component by file name (no extension);
+  the containing folder ("Custom Module") is not referenced by name.
 - `sasl.createCommand("RCHud/toggleHUD", "desc")` +
-  `sasl.registerCommandHandler(cmd, 0, fn)`; en `fn`, `phase` ==
-  `SASL_COMMAND_BEGIN` al pulsar. Devolver `0` corta otros callbacks.
-- Callbacks del componente: `update()`, `draw()`, `onMouseDown`,
-  `onMouseHold` (firmas: `(comp, x, y, button, parentX, parentY)`).
-  `isInRect(rect, x, y)` con `rect = {x, y, w, h}`. `MB_LEFT` = botón
-  izquierdo. Devolver `false` deja pasar el evento (p. ej. para que la
-  ventana se pueda arrastrar).
+  `sasl.registerCommandHandler(cmd, 0, fn)`; in `fn`, `phase` ==
+  `SASL_COMMAND_BEGIN` on press. Returning `0` stops other callbacks.
+- Component callbacks: `update()`, `draw()`, `onMouseDown`, `onMouseHold`
+  (signatures: `(comp, x, y, button, parentX, parentY)`). `isInRect(rect, x,
+  y)` with `rect = {x, y, w, h}`. `MB_LEFT` = left button. Returning `false`
+  lets the event pass through (e.g. so the window can be dragged).
 
-## Ciclo de vida
+## Lifecycle
 
-- Código a nivel de módulo (cargar fuentes, declarar props/datarefs) se
-  ejecuta **una vez** al cargar.
-- `update()` se llama cada tick (lógica/estado).
-- `draw()` se llama cada frame (solo dibujo; idealmente sin lógica pesada).
+- Module-level code (loading fonts, declaring props/datarefs) runs **once**
+  on load.
+- `update()` is called every tick (logic/state).
+- `draw()` is called every frame (drawing only; ideally no heavy logic).

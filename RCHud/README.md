@@ -1,68 +1,67 @@
 # RCHud
 
-**HUD overlay para vuelo RC en X-Plane 12.**
+**HUD overlay for RC flight in X-Plane 12.**
 
-Plugin que dibuja una franja de instrumentos mínima y vectorial sobre la
-pantalla, pensada como **estación de control en tierra** para volar
-aviones radiocontrol (RC) en vista externa, sin depender de la cabina del
-modelo. De un vistazo, desde el suelo, el piloto RC ve solo lo que
-necesita: altura sobre el terreno, energía del motor, actitud, rumbo,
-estado del tren y de los flaps.
+A plugin that draws a minimal, vectorial instrument strip over the screen,
+designed as a **ground control station** for flying radio-controlled (RC)
+aircraft in external view, without relying on the model's cockpit. At a
+glance, from the ground, the RC pilot sees only what they need: height
+above terrain, engine power, attitude, heading, gear and flap state.
 
-Inspirado en el overlay de Aerofly RC y construido sobre
-[MiniHUD](https://github.com/bastibe/MiniHUD) de Bastian Bechtold (SASL,
+Inspired by the Aerofly RC overlay and built on top of
+[MiniHUD](https://github.com/bastibe/MiniHUD) by Bastian Bechtold (SASL,
 GPLv3).
 
-> 📷 _Captura del HUD en vuelo — pendiente de añadir._
+> 📷 _Screenshot of the HUD in flight — to be added._
 
-> **Estado: v0.1.0.** HUD funcional y verificado en vuelo con varios
-> modelos (pistón, turbofan con N1, jet sin N1). El panel de **mapa** del
-> tercio derecho está reservado para una versión futura.
+> **Status: v0.1.0.** Functional HUD, verified in flight across several
+> models (piston, turbofan with N1, jet without N1). The right-third
+> **map** panel is reserved for a future version.
 
-## Instrumentos
+## Instruments
 
-Franja horizontal anclada a todo el ancho en la parte inferior de la
-pantalla. De izquierda a derecha:
+A horizontal strip anchored full-width along the bottom of the screen.
+From left to right:
 
-- **Altura AGL** — altura real sobre el terreno (no MSL), con cinta
-  vertical, línea de tierra y **variómetro** (velocidad vertical).
-- **Velocidad** — dial circular analógico con bandas de referencia
-  ancladas a las V-speeds del modelo (p. ej. `Vne`).
-- **Actitud (ADI)** — horizonte artificial azul/café con cabeceo y
-  alabeo del modelo.
-- **Potencia** — dial circular cuya métrica se elige según el **tipo de
-  motor**: RPM en pistón, **%N1** en turbina que lo expone, o **% de
-  gases** (THR) en eléctrico / jet sin N1.
-- **Rumbo** — brújula **NORTE-ARRIBA** con una silueta de avión que gira
-  para mostrar la orientación del modelo, y lectura numérica.
-- **Tren de aterrizaje** — dibujado en su **planta real** (lee qué patas
-  tiene el modelo y dónde van). Color por estado: **verde** abajo,
-  **ámbar** en tránsito, apagado arriba. Autodetecta tren fijo.
-- **Flaps** — barra vertical con la posición y el porcentaje.
+- **AGL height** — true height above terrain (not MSL), with a vertical
+  tape, a ground line and a **vertical-speed indicator**.
+- **Airspeed** — analog circular dial with reference bands anchored to the
+  model's V-speeds (e.g. `Vne`).
+- **Attitude (ADI)** — blue/brown artificial horizon showing the model's
+  pitch and roll.
+- **Power** — circular dial whose metric is chosen by **engine type**: RPM
+  for piston, **%N1** for a turbine that exposes it, or **throttle %**
+  (THR) for electric / jet without N1.
+- **Heading** — **north-up** compass with an aircraft silhouette that
+  rotates to show the model's orientation, plus a numeric readout.
+- **Landing gear** — drawn in its **true planform** (reads which legs the
+  model has and where they sit). Colored by state: **green** down,
+  **amber** in transit, dim when up. Auto-detects fixed gear.
+- **Flaps** — vertical bar with position and percentage.
 
-El **tercio derecho se deja libre a propósito**, reservado para un futuro
-panel de mapa (pista cercana / punto "home").
+The **right third is left empty on purpose**, reserved for a future map
+panel (nearby runway / "home" point).
 
-## Controles
+## Controls
 
-Todo se maneja desde el menú **Plugins ▸ RCHud** o con comandos
-asignables a la emisora / joystick. El HUD es **solo lectura**: se vuela
-con la emisora, no se interactúa con el ratón.
+Everything is driven from the **Plugins ▸ RCHud** menu or with commands you
+can bind to your transmitter / joystick. The HUD is **read-only**: you fly
+with the transmitter, there is no mouse interaction.
 
-| Menú | Comando (asignable) | Qué hace |
+| Menu | Command (bindable) | What it does |
 |---|---|---|
-| **Show HUD** | `RCHud/toggleHUD` | Muestra / oculta el HUD. |
-| **Units ▸ Metric / Aviation** | `RCHud/toggleUnits` | Alterna unidades **métrico** (km/h, m, m/s) ↔ **aviación** (kt, ft, fpm). |
-| **Opacity** | `RCHud/cycleOpacity` | Opacidad global del HUD (100 % … 15 %). |
-| **Background** | `RCHud/cycleBackground` | Panel de fondo gris opcional (Off / 15 / 25 / 40 / 60 %) para fondos claros. |
+| **Show HUD** | `RCHud/toggleHUD` | Show / hide the HUD. |
+| **Units ▸ Metric / Aviation** | `RCHud/toggleUnits` | Toggle units **metric** (km/h, m, m/s) ↔ **aviation** (kt, ft, fpm). |
+| **Opacity** | `RCHud/cycleOpacity` | Global HUD opacity (100 % … 15 %). |
+| **Background** | `RCHud/cycleBackground` | Optional grey backing panel (Off / 15 / 25 / 40 / 60 %) for bright backgrounds. |
 
-Las preferencias (visibilidad, unidades, opacidad y fondo) se **guardan
-automáticamente** y se restauran al reiniciar.
+Preferences (visibility, units, opacity and background) are **saved
+automatically** and restored on restart.
 
-## Instalación
+## Installation
 
-Copia la carpeta `RCHud` a `X-Plane 12/Resources/plugins`. La estructura
-debe quedar así:
+Copy the `RCHud` folder into `X-Plane 12/Resources/plugins`. The layout
+should look like this:
 
 <pre>
 📂 X-Plane 12
@@ -71,43 +70,42 @@ debe quedar así:
     └ 📂 RCHud
       ├ 📁 64
       ├ 📁 data
-      ├ 📁 liblinux   (o libmac / libwin según plataforma)
+      ├ 📁 liblinux   (or libmac / libwin depending on platform)
       └ 📄 README.md</pre>
 
-> **Nota para desarrolladores:** este repositorio versiona únicamente el
-> código Lua de autor (`data/modules/`) y la documentación. El runtime de
-> SASL y los binarios (`64/`, `data/api`, `data/init`, `data/components`,
-> librerías nativas) provienen del paquete SASL y se superponen al
-> empaquetar — no están en git.
+> **Note for developers:** this repository versions only the author's Lua
+> code (`data/modules/`) and the documentation. The SASL runtime and
+> binaries (`64/`, `data/api`, `data/init`, `data/components`, native
+> libraries) come from the SASL package and are overlaid when packaging —
+> they are not in git.
 
-## Compatibilidad
+## Compatibility
 
-Construido sobre SASL, igual que MiniHUD: X-Plane 11 y 12, en Windows,
-macOS (Intel + ARM) y Linux.
+Built on SASL, like MiniHUD: X-Plane 11 and 12, on Windows, macOS (Intel +
+ARM) and Linux.
 
-## Créditos
+## Credits
 
-- **MiniHUD** — base del proyecto. Copyright (C) 2023 Bastian Bechtold.
-  Redimensionado por TreeBaron.
-- **SASL** — framework de scripting/avionics (1-sim) sobre el que corre
-  el plugin.
+- **MiniHUD** — the basis of this project. Copyright (C) 2023 Bastian
+  Bechtold. Resized by TreeBaron.
+- **SASL** — the scripting/avionics framework (1-sim) the plugin runs on.
 
-## Licencia
+## License
 
 RCHud
 Copyright (C) 2026 Juan Luis Gabriel
 
-Derivado de MiniHUD, Copyright (C) 2023 Bastian Bechtold.
+Derived from MiniHUD, Copyright (C) 2023 Bastian Bechtold.
 
-Este programa es software libre: puedes redistribuirlo y/o modificarlo
-bajo los términos de la Licencia Pública General GNU publicada por la
-Free Software Foundation, en su versión 3 o (a tu elección) cualquier
-versión posterior.
+This program is free software: you can redistribute it and/or modify it
+under the terms of the GNU General Public License as published by the Free
+Software Foundation, either version 3 of the License, or (at your option)
+any later version.
 
-Se distribuye con la esperanza de que sea útil, pero SIN NINGUNA
-GARANTÍA; ni siquiera la garantía implícita de COMERCIABILIDAD o
-IDONEIDAD PARA UN PROPÓSITO PARTICULAR. Consulta la Licencia Pública
-General GNU para más detalles.
+It is distributed in the hope that it will be useful, but WITHOUT ANY
+WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS
+FOR A PARTICULAR PURPOSE. See the GNU General Public License for more
+details.
 
-Ver el archivo [LICENSE](../LICENSE) o
-<https://www.gnu.org/licenses/> para el texto completo.
+See the [LICENSE](../LICENSE) file or <https://www.gnu.org/licenses/> for
+the full text.

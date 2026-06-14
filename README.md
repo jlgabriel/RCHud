@@ -1,50 +1,50 @@
-# RCHud — proyecto
+# RCHud — project
 
-HUD overlay para vuelo RC en X-Plane 12, derivado de
+HUD overlay for RC flight in X-Plane 12, derived from
 [MiniHUD](https://github.com/bastibe/MiniHUD) (SASL, GPLv3).
 
-Este es el **repositorio de desarrollo**. El plugin en sí vive en
+This is the **development repository**. The plugin itself lives in
 [`RCHud/`](RCHud/).
 
-## Estructura del repo
+## Repo layout
 
-| Ruta | Qué es |
+| Path | What it is |
 |---|---|
-| [`RCHud/`](RCHud/) | El plugin. Se versiona solo el Lua de autor en `RCHud/data/modules/`; el runtime de SASL y binarios quedan fuera (ver `.gitignore`). |
-| [`docs/`](docs/) | Documentación técnica de trabajo. |
-| [`hud-rc-xplane12-brief.md`](hud-rc-xplane12-brief.md) | Brief original del proyecto (objetivos, decisiones, plan por fases). |
+| [`RCHud/`](RCHud/) | The plugin. Only the author's Lua under `RCHud/data/modules/` is versioned; the SASL runtime and binaries are kept out (see `.gitignore`). |
+| [`docs/`](docs/) | Working technical documentation. |
+| [`hud-rc-xplane12-brief.md`](hud-rc-xplane12-brief.md) | Original project brief (goals, decisions, phased plan). |
 | `LICENSE` | GPLv3. |
-| `MiniHUD/` *(local, no versionado)* | Paquete original de MiniHUD, como referencia. |
+| `MiniHUD/` *(local, not versioned)* | Original MiniHUD package, kept as reference. |
 
-## Documentación
+## Documentation
 
-- [`docs/sasl-api.md`](docs/sasl-api.md) — referencia de la API de dibujo
-  SASL (`gl.*`) que usa RCHud.
-- [`docs/mapa-instrumentos.md`](docs/mapa-instrumentos.md) — mapa
-  instrumento → código de `instrumentpanel.lua`, con datarefs y veredicto
-  RC por instrumento.
+- [`docs/sasl-api.md`](docs/sasl-api.md) — reference for the SASL drawing
+  API (`gl.*`) that RCHud uses.
+- [`docs/instrument-map.md`](docs/instrument-map.md) — instrument → code
+  map of `instrumentpanel.lua`, with datarefs and an RC verdict per
+  instrument.
 
-## Estado
+## Status
 
-**v0.1.0** — HUD funcional y verificado en vuelo. Estación de control en
-tierra con franja horizontal a todo el ancho:
+**v0.1.0** — functional HUD, verified in flight. Ground control station
+with a full-width horizontal strip:
 
-- Altura **AGL** con cinta, línea de tierra y variómetro.
-- **Velocidad** y **potencia** como diales circulares (potencia = RPM /
-  %N1 / % gases según el tipo de motor).
-- **Actitud (ADI)** azul/café y **brújula norte-arriba** con silueta del
-  modelo.
-- **Tren** en planta real con color por estado (abajo / tránsito / arriba)
-  y **flaps** con porcentaje.
-- Menú **Plugins ▸ RCHud** (Show HUD / Units / Opacity / Background) +
-  comandos asignables a la emisora; **unidades** métrico ↔ aviación;
-  **opacidad** y **panel de fondo** ajustables; preferencias persistentes.
+- **AGL** height with tape, ground line and vertical-speed indicator.
+- **Airspeed** and **power** as circular dials (power = RPM / %N1 /
+  throttle % depending on engine type).
+- **Attitude (ADI)** blue/brown and a **north-up compass** with a
+  silhouette of the model.
+- **Landing gear** in true planform, colored by state (down / in
+  transit / up), and **flaps** with percentage.
+- **Plugins ▸ RCHud** menu (Show HUD / Units / Opacity / Background) plus
+  bindable commands; **units** metric ↔ aviation; adjustable **opacity**
+  and **background panel**; persistent preferences.
 
-Siguiente (en hold): panel de **mapa** del tercio derecho (pista cercana /
-punto "home"), viento relativo a pista y anunciadores. Ver el plan por
-fases en el brief.
+Next (on hold): the right-third **map** panel (nearby runway / "home"
+point), runway-relative wind and annunciators. See the phased plan in the
+brief.
 
-## Licencia
+## License
 
-GPLv3. RCHud © 2026 Juan Luis Gabriel; derivado de MiniHUD © 2023 Bastian
-Bechtold. Ver [LICENSE](LICENSE).
+GPLv3. RCHud © 2026 Juan Luis Gabriel; derived from MiniHUD © 2023 Bastian
+Bechtold. See [LICENSE](LICENSE).
