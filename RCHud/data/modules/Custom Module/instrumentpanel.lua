@@ -335,7 +335,7 @@ function draw()
     -- Declared as LOCALS here (not file-level upvalues) so draw() stays under
     -- Lua's 60-upvalue limit. The AGL tape on the far left is separate (tapeX
     -- below); these six instruments are packed toward the left so the HUD stays
-    -- compact, leaving the right of the strip clear (future map panel). Tune
+    -- compact, leaving the right of the strip clear. Tune
     -- sizes and spacing HERE.
     --------------------------------------------------------------------
     local ROW_CY   = 112    -- shared vertical center: SPEED / ADI / POWER / HEADING / GEAR

@@ -76,8 +76,7 @@ fraction of that frame (`mainFrameWidth * 0.10`, `0.30`, …).
   transforms), HDG box, and a **wind barb** (triangles/long/short, weather-
   chart style) rotated to the wind direction relative to the rose.
 - **RC verdict: keep, restyle; add an RC layer.** Wind relative to the
-  runway/field is very relevant in RC. The **bearing to "home"** (takeoff
-  point) also fits here as an arrow over the rose.
+  runway/field is very relevant in RC.
 
 ## Candidate datarefs for the RC layer (to verify in XP12)
 
@@ -85,15 +84,13 @@ fraction of that frame (`mainFrameWidth * 0.10`, `0.30`, …).
 |---|---|---|
 | AGL height | `sim/flightmodel/position/y_agl` | m |
 | Vertical speed | `sim/flightmodel/position/vh_ind_fpm` | fpm |
-| Position (home) | `sim/flightmodel/position/latitude` / `longitude` | ° |
 | True/mag heading | `sim/flightmodel/position/true_psi` / `mag_psi` | ° |
 | Wind (family) | `sim/weather/aircraft/wind_*` | verify |
 | Battery/fuel | **depends on the model (RCE)** | verify |
 
-> **Open design questions** (from the brief, affecting this layer): the
-> **"home"** point (takeoff auto-detection vs. a manual `RCHud/setHome`
-> command), and how each RC-Elements aircraft exposes battery/fuel. Resolve
-> with a concrete test model.
+> **Open design questions** (from the brief, affecting this layer): how each
+> RC-Elements aircraft exposes battery/fuel. Resolve with a concrete test
+> model.
 
 ## Interaction (dragging)
 

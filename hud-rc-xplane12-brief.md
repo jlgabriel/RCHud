@@ -135,8 +135,6 @@ To **add / prioritize**:
 - [ ] **AGL height** (not ASL): models fly low.
 - [ ] **Battery + remaining flight time** (electric); **fuel** for
   glow/turbine.
-- [ ] **Distance and bearing to the takeoff point / pilot**: models fly away
-  and become tiny.
 - [ ] **Wind relative to the runway/field**.
 - [ ] **Model-orientation aid** (silhouette/arrow: is it coming toward me or
   going away?). *The #1 RC problem.*
@@ -162,17 +160,11 @@ case by case).
 - AGL height: `sim/flightmodel/position/y_agl` (m)
 - Vertical speed: `sim/flightmodel/position/vh_ind_fpm`
 - Heading: `sim/flightmodel/position/mag_psi` / `true_psi`
-- Position: `sim/flightmodel/position/latitude`, `.../longitude` (for
-  distance/bearing to "home")
 - Wind: check the `sim/weather/aircraft/wind_*` family (to verify)
 - Throttle: `sim/cockpit2/engine/actuators/throttle_ratio_all`
 - Battery/fuel: **to verify per aircraft** (electric vs glow vs turbine)
 - Control surfaces / trim: `sim/cockpit2/controls/*` and
   `sim/flightmodel2/controls/*` families
-
-**"Home" for distance/bearing:** decide whether the takeoff point is
-auto-detected or set with a bindable *command* (recommended: a "set home
-point" command).
 
 ---
 
@@ -200,7 +192,6 @@ point" command).
 ### Phase 3 — RC instruments
 - [ ] AGL
 - [ ] Battery + remaining time / fuel
-- [ ] Distance + bearing to "home" (with a command to set home)
 - [ ] Wind relative to the runway
 - [ ] Model-orientation aid
 - [ ] Warning annunciators
@@ -222,9 +213,8 @@ point" command).
 
 1. Does `data/modules` come as plain `.lua` or packed?
 2. Default units: metric (km/h, m) like Aerofly, or configurable?
-3. "Home" for distance/bearing: takeoff auto-detection or a manual command?
-4. Which RCE aircraft as the first test target?
-5. How do RCE aircraft expose battery/fuel per model? (map the real
+3. Which RCE aircraft as the first test target?
+4. How do RCE aircraft expose battery/fuel per model? (map the real
    datarefs)
 
 ---

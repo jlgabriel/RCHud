@@ -40,9 +40,8 @@ with a full-width horizontal strip:
   bindable commands; **units** metric ↔ aviation; adjustable **opacity**
   and **background panel**; persistent preferences.
 
-Next (on hold): the right-third **map** panel (nearby runway / "home"
-point), runway-relative wind and annunciators. See the phased plan in the
-brief.
+Next (on hold): runway-relative wind and annunciators. See the phased plan
+in the brief.
 
 ## License
 

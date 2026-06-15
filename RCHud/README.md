@@ -13,8 +13,7 @@ Inspired by the Aerofly RC overlay and built on top of
 GPLv3).
 
 > **Status: v0.1.0.** Functional HUD, verified in flight across several
-> models (piston, turbofan with N1, jet without N1). The right-third
-> **map** panel is reserved for a future version.
+> models (piston, turbofan with N1, jet without N1).
 
 ## Instruments
 
@@ -37,8 +36,8 @@ From left to right:
   **amber** in transit, dim when up. Auto-detects fixed gear.
 - **Flaps** — vertical bar with position and percentage.
 
-The **right third is left empty on purpose**, reserved for a future map
-panel (nearby runway / "home" point).
+The **right third is left empty on purpose**, keeping the instruments
+compact and the scene behind them clear.
 
 ## Controls
 
