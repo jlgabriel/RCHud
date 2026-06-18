@@ -12,7 +12,7 @@ Inspired by the Aerofly RC overlay and built on top of
 [MiniHUD](https://github.com/bastibe/MiniHUD) by Bastian Bechtold (SASL,
 GPLv3).
 
-> **Status: v0.1.0.** Functional HUD, verified in flight across several
+> **Status: v0.2.0.** Functional HUD, verified in flight across several
 > models (piston, turbofan with N1, jet without N1).
 
 ## Instruments
@@ -22,10 +22,13 @@ From left to right:
 
 - **AGL height** — true height above terrain (not MSL), with a vertical
   tape, a ground line and a **vertical-speed indicator**.
-- **Airspeed** — analog circular dial with reference bands anchored to the
-  model's V-speeds (e.g. `Vne`).
+- **Speed** — analog circular dial with reference bands anchored to the
+  model's V-speeds (e.g. `Vne`). The source is selectable: **GPS ground
+  speed** (`GS`, the default — what most RC models actually carry) or
+  **indicated airspeed** (`IAS`). The label shows which one is live.
 - **Attitude (ADI)** — blue/brown artificial horizon showing the model's
-  pitch and roll.
+  pitch and roll. The horizon line stays pinned to the rim at extreme
+  attitudes, so a vertical climb/dive never leaves the disc solid.
 - **Power** — circular dial whose metric is chosen by **engine type**: RPM
   for piston, **%N1** for a turbine that exposes it, or **throttle %**
   (THR) for electric / jet without N1.
@@ -49,11 +52,12 @@ with the transmitter, there is no mouse interaction.
 |---|---|---|
 | **Show HUD** | `RCHud/toggleHUD` | Show / hide the HUD. |
 | **Units ▸ Metric / Aviation** | `RCHud/toggleUnits` | Toggle units **metric** (km/h, m, m/s) ↔ **aviation** (kt, ft, fpm). |
+| **Speed source ▸ GPS / IAS** | `RCHud/toggleSpeedSource` | Toggle the speed dial between **GPS ground speed** and **indicated airspeed**. |
 | **Opacity** | `RCHud/cycleOpacity` | Global HUD opacity (100 % … 15 %). |
 | **Background** | `RCHud/cycleBackground` | Optional grey backing panel (Off / 15 / 25 / 40 / 60 %) for bright backgrounds. |
 
-Preferences (visibility, units, opacity and background) are **saved
-automatically** and restored on restart.
+Preferences (visibility, units, speed source, opacity and background) are
+**saved automatically** and restored on restart.
 
 ## Installation
 

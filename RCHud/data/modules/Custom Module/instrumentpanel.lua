@@ -70,6 +70,9 @@ end)
 -- Datarefs
 ------------------------------------------------------------------------
 local airspeedProp = globalPropertyf("sim/cockpit2/gauges/indicators/airspeed_kts_pilot")
+-- GPS ground speed (knots, 2D). Most RC models only carry a GPS receiver, so
+-- this is the realistic default; IAS is the optional high-end/UAS-style source.
+local groundspeedProp = globalPropertyf("sim/cockpit2/gauges/indicators/ground_speed_kt")
 local vneProp = globalPropertyf("sim/aircraft/view/acf_Vne")
 local vfeProp = globalPropertyf("sim/aircraft/view/acf_Vfe")
 local vnoProp = globalPropertyf("sim/aircraft/view/acf_Vno")
@@ -103,7 +106,10 @@ local gearArrProp = globalPropertyfa("sim/flightmodel2/gear/deploy_ratio", 10)
 local gearTypeArr = globalPropertyfa("sim/aircraft/parts/acf_gear_type", 10)
 local gearXArr = globalPropertyfa("sim/aircraft/parts/acf_gear_xnodef", 10)
 local gearZArr = globalPropertyfa("sim/aircraft/parts/acf_gear_znodef", 10)
-local flapsRatioProp = globalPropertyf("sim/cockpit2/controls/flap_ratio")
+-- Actual flap deployment for the whole system (0=up, 1=full); accounts for the
+-- slow travel, so the bar animates as the surfaces move. Replaces the deprecated
+-- sim/cockpit2/controls/flap_ratio (the old handle-request dataref).
+local flapsRatioProp = globalPropertyf("sim/cockpit2/controls/flap_system_deploy_ratio")
 -- X-Plane window size (to anchor the HUD full-width at the bottom)
 local screenWidthProp = globalPropertyi("sim/graphics/view/window_width")
 local screenHeightProp = globalPropertyi("sim/graphics/view/window_height")
@@ -137,6 +143,21 @@ local function vsParts(fpm)
     else
         return string.format("%+.0f", fpm), "fpm"
     end
+end
+
+------------------------------------------------------------------------
+-- Configurable speed source (state in localState, toggled with toggleSpeedSource)
+--   "gps" => GPS ground speed (default, what most RC models actually have)
+--   "ias" => indicated airspeed (optional, high-end / UAS-style setups)
+------------------------------------------------------------------------
+local function speedSourceIsGps()
+    return get(localState).speedSource ~= "ias"
+end
+
+-- Speed shown on the dial, in knots (fed into speedParts for unit conversion).
+local function currentSpeedKt()
+    if speedSourceIsGps() then return get(groundspeedProp) or 0
+    else return get(airspeedProp) or 0 end
 end
 
 ------------------------------------------------------------------------
@@ -416,7 +437,7 @@ function draw()
     --------------------------------------------------------------------
     -- Airspeed (circular dial)
     --------------------------------------------------------------------
-    local spdKt = get(airspeedProp)
+    local spdKt = currentSpeedKt()
     local vne, vno, vso, vs = get(vneProp), get(vnoProp), get(vsoProp), get(vsProp)
     local minA, maxA, spdBands
     if vne and vne > 0 then
@@ -437,7 +458,9 @@ function draw()
     local spdFrac = (spdKt - minA) / (maxA - minA)
     local spdColor = (spdKt > maxA) and orange or white
     local spdDisp, spdUnit = speedParts(spdKt)
-    drawDial(CX_SPEED, ROW_CY, DIAL_R, spdBands, spdFrac, string.format("%.0f", spdDisp), spdUnit, "SPEED", spdColor, LABEL_Y)
+    -- Label tells the pilot which speed they are reading: GS (GPS) or IAS.
+    local spdLabel = (get(localState).speedSource == "ias") and "IAS" or "GS"
+    drawDial(CX_SPEED, ROW_CY, DIAL_R, spdBands, spdFrac, string.format("%.0f", spdDisp), spdUnit, spdLabel, spdColor, LABEL_Y)
 
     --------------------------------------------------------------------
     -- Attitude (ADI): disc with blue sky / brown ground
@@ -455,15 +478,18 @@ function draw()
     sasl.gl.setTranslateTransform(adiX, adiY)
     sasl.gl.setRotateTransform(-roll)
     sasl.gl.drawCircle(0, 0, adiR, true, skyColor)
-    if po <= -adiR then
-        sasl.gl.drawCircle(0, 0, adiR, true, groundColor)
-    elseif po < adiR then
-        local as = math.asin(po / adiR)
+    -- Clamp the horizon just inside the rim so the dividing line (and a sliver
+    -- of sky/ground) is always drawn, even past +/-25 deg. A vertical climb /
+    -- dive or aerobatics no longer turns the disc solid blue/brown with no
+    -- reference; the line pins to the edge on the side the horizon went off.
+    local poC = math.max(-adiR + horizonTh, math.min(adiR - horizonTh, po))
+    do
+        local as = math.asin(poC / adiR)
         local a0 = math.pi - as
         local a1 = 2 * math.pi + as
         local xc = adiR * math.cos(as)
         local steps = 22
-        local lx, ly = -xc, po
+        local lx, ly = -xc, poC
         local pX, pY = lx, ly
         for i = 1, steps do
             local t  = a0 + (a1 - a0) * (i / steps)
@@ -472,7 +498,7 @@ function draw()
             sasl.gl.drawTriangle(lx, ly, pX, pY, nx, ny, groundColor)
             pX, pY = nx, ny
         end
-        sasl.gl.drawRectangle(-xc, po - horizonTh / 2, 2 * xc, horizonTh, white)
+        sasl.gl.drawRectangle(-xc, poC - horizonTh / 2, 2 * xc, horizonTh, white)
     end
     for _, a in ipairs({-20, -10, 10, 20}) do
         local ry = po + a * pxPerDeg

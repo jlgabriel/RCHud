@@ -26,12 +26,14 @@ This is the **development repository**. The plugin itself lives in
 
 ## Status
 
-**v0.1.0** — functional HUD, verified in flight. Ground control station
+**v0.2.0** — functional HUD, verified in flight. Ground control station
 with a full-width horizontal strip:
 
 - **AGL** height with tape, ground line and vertical-speed indicator.
-- **Airspeed** and **power** as circular dials (power = RPM / %N1 /
-  throttle % depending on engine type).
+- **Speed** and **power** as circular dials. Speed source is selectable
+  between **GPS ground speed** (default, what most RC models carry) and
+  **indicated airspeed**; power = RPM / %N1 / throttle % depending on
+  engine type.
 - **Attitude (ADI)** blue/brown and a **north-up compass** with a
   silhouette of the model.
 - **Landing gear** in true planform, colored by state (down / in

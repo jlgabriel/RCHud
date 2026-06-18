@@ -10,7 +10,7 @@ sasl.options.setAircraftPanelRendering(false)
 sasl.options.set3DRendering(false)
 sasl.options.setInteractivity(false)
 
-local rcHudVersionProp = createGlobalPropertys("RCHud/version", "v0.1.0")
+local rcHudVersionProp = createGlobalPropertys("RCHud/version", "v0.2.0")
 sasl.logInfo("RCHud version:", get(rcHudVersionProp))
 
 -- HUD logical canvas (aspect ratio of the horizontal strip).
@@ -25,6 +25,7 @@ local localState = {
    windowWidth = startWidth,
    contextWindow = nil,
    units = "metric",  -- "metric" (km/h, m, m/s) | "aviation" (kt, ft, fpm). Toggle with RCHud/toggleUnits
+   speedSource = "gps", -- "gps" (GPS ground speed, default) | "ias" (airspeed). Toggle with RCHud/toggleSpeedSource
    opacity = 1.0,     -- HUD opacity 0..1 (1 = opaque). Set from Plugins > RCHud > Opacity
    bgOpacity = 0.0    -- grey backing panel 0..1 (0 = off). Set from Plugins > RCHud > Background
 }
@@ -64,9 +65,10 @@ local function saveSettings()
     local f = io.open(SETTINGS_PATH, "w")
     if f == nil then return end
     f:write(string.format(
-        "return {\n  visible = %s,\n  units = %q,\n  opacity = %s,\n  bgOpacity = %s,\n}\n",
+        "return {\n  visible = %s,\n  units = %q,\n  speedSource = %q,\n  opacity = %s,\n  bgOpacity = %s,\n}\n",
         tostring(instrumentWindow:isVisible()),
         localState.units,                       -- %q quotes and escapes the string
+        localState.speedSource,
         tostring(localState.opacity or 1.0),
         tostring(localState.bgOpacity or 0.0)))
     f:close()
@@ -79,8 +81,9 @@ do
     if chunk ~= nil then
         local ok, t = pcall(chunk)
         if ok and type(t) == "table" then
-            if type(t.units) == "string"     then localState.units = t.units end
-            if type(t.opacity) == "number"   then localState.opacity = t.opacity end
+            if type(t.units) == "string"       then localState.units = t.units end
+            if type(t.speedSource) == "string" then localState.speedSource = t.speedSource end
+            if type(t.opacity) == "number"     then localState.opacity = t.opacity end
             if type(t.bgOpacity) == "number" then localState.bgOpacity = t.bgOpacity end
             if t.visible == false then instrumentWindow:setIsVisible(false) end
             sasl.logInfo("RCHud settings loaded:", SETTINGS_PATH)
@@ -93,8 +96,9 @@ end
 -- through these so the menu checkmarks always reflect the live state.
 ------------------------------------------------------------------------
 -- Menu handles, filled in when the menu is built below.
-local rcHudMenuId, unitsMenuId, opacityMenuId, bgMenuId
+local rcHudMenuId, unitsMenuId, speedMenuId, opacityMenuId, bgMenuId
 local menuShowItem, menuUnitsMetric, menuUnitsAviation
+local menuSpeedGps, menuSpeedIas
 local menuOpacityItems = {}
 local menuBgItems = {}
 -- Discrete opacity levels offered in the menu (and cycled by the command).
@@ -115,6 +119,11 @@ local function refreshMenu()
         local metric = (localState.units ~= "aviation")
         sasl.setMenuItemState(unitsMenuId, menuUnitsMetric,   metric and MENU_CHECKED or MENU_UNCHECKED)
         sasl.setMenuItemState(unitsMenuId, menuUnitsAviation, metric and MENU_UNCHECKED or MENU_CHECKED)
+    end
+    if menuSpeedGps ~= nil then
+        local gps = (localState.speedSource ~= "ias")
+        sasl.setMenuItemState(speedMenuId, menuSpeedGps, gps and MENU_CHECKED or MENU_UNCHECKED)
+        sasl.setMenuItemState(speedMenuId, menuSpeedIas, gps and MENU_UNCHECKED or MENU_CHECKED)
     end
     for i, lv in ipairs(OPACITY_LEVELS) do
         local item = menuOpacityItems[i]
@@ -151,6 +160,17 @@ end
 
 local function toggleUnits()
     setUnits(localState.units == "aviation" and "metric" or "aviation")
+end
+
+local function setSpeedSource(src)
+    localState.speedSource = src
+    sasl.logInfo("RCHud speed source:", localState.speedSource)
+    refreshMenu()
+    saveSettings()
+end
+
+local function toggleSpeedSource()
+    setSpeedSource(localState.speedSource == "ias" and "gps" or "ias")
 end
 
 local function setOpacity(value)
@@ -200,6 +220,12 @@ unitsMenuId = sasl.createMenu("Units", rcHudMenuId, unitsMenuItem)
 menuUnitsMetric   = sasl.appendMenuItem(unitsMenuId, "Metric (km/h, m, m/s)", function() setUnits("metric") end)
 menuUnitsAviation = sasl.appendMenuItem(unitsMenuId, "Aviation (kt, ft, fpm)", function() setUnits("aviation") end)
 
+-- Speed source submenu: GPS ground speed (realistic for RC) or indicated airspeed.
+local speedMenuItem = sasl.appendMenuItem(rcHudMenuId, "Speed source")
+speedMenuId = sasl.createMenu("Speed source", rcHudMenuId, speedMenuItem)
+menuSpeedGps = sasl.appendMenuItem(speedMenuId, "GPS (ground speed)", function() setSpeedSource("gps") end)
+menuSpeedIas = sasl.appendMenuItem(speedMenuId, "IAS (airspeed)", function() setSpeedSource("ias") end)
+
 -- Opacity submenu: discrete levels, the active one is checked.
 local opacityMenuItem = sasl.appendMenuItem(rcHudMenuId, "Opacity")
 opacityMenuId = sasl.createMenu("Opacity", rcHudMenuId, opacityMenuItem)
@@ -231,6 +257,13 @@ end)
 local toggleUnitsCommand = sasl.createCommand("RCHud/toggleUnits", "Toggle units metric/aviation")
 sasl.registerCommandHandler(toggleUnitsCommand, 0, function (phase)
     if phase == SASL_COMMAND_BEGIN then toggleUnits() end
+    return 0 -- don't allow other callbacks to run
+end)
+
+-- toggle speed source live (GPS ground speed <-> indicated airspeed)
+local toggleSpeedSourceCommand = sasl.createCommand("RCHud/toggleSpeedSource", "Toggle speed source GPS/IAS")
+sasl.registerCommandHandler(toggleSpeedSourceCommand, 0, function (phase)
+    if phase == SASL_COMMAND_BEGIN then toggleSpeedSource() end
     return 0 -- don't allow other callbacks to run
 end)
 
