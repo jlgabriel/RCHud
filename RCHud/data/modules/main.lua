@@ -10,7 +10,7 @@ sasl.options.setAircraftPanelRendering(false)
 sasl.options.set3DRendering(false)
 sasl.options.setInteractivity(false)
 
-local rcHudVersionProp = createGlobalPropertys("RCHud/version", "v0.2.0")
+local rcHudVersionProp = createGlobalPropertys("RCHud/version", "v0.3.0")
 sasl.logInfo("RCHud version:", get(rcHudVersionProp))
 
 -- HUD logical canvas (aspect ratio of the horizontal strip).

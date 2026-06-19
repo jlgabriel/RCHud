@@ -12,8 +12,8 @@ Inspired by the Aerofly RC overlay and built on top of
 [MiniHUD](https://github.com/bastibe/MiniHUD) by Bastian Bechtold (SASL,
 GPLv3).
 
-> **Status: v0.2.0.** Functional HUD, verified in flight across several
-> models (piston, turbofan with N1, jet without N1).
+> **Status: v0.3.0.** Functional HUD, verified in flight across several
+> models (piston, turbofan with N1, jet without N1, and electric).
 
 ## Instruments
 
@@ -38,6 +38,12 @@ From left to right:
   model has and where they sit). Colored by state: **green** down,
   **amber** in transit, dim when up. Auto-detects fixed gear.
 - **Flaps** — vertical bar with position and percentage.
+- **Energy reserve** — a vertical "battery" bar next to the flaps, chosen
+  automatically by **engine type**: **battery** state of charge + pack
+  voltage for electric models, or **fuel** remaining + quantity for
+  combustion. The fuel reading is the actual pre-flight load against the
+  real tank size (not assumed full), and the bar is colored **green /
+  amber / red** as the reserve drops.
 
 The **right third is left empty on purpose**, keeping the instruments
 compact and the scene behind them clear.

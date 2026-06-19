@@ -26,7 +26,7 @@ This is the **development repository**. The plugin itself lives in
 
 ## Status
 
-**v0.2.0** — functional HUD, verified in flight. Ground control station
+**v0.3.0** — functional HUD, verified in flight. Ground control station
 with a full-width horizontal strip:
 
 - **AGL** height with tape, ground line and vertical-speed indicator.
@@ -38,6 +38,9 @@ with a full-width horizontal strip:
   silhouette of the model.
 - **Landing gear** in true planform, colored by state (down / in
   transit / up), and **flaps** with percentage.
+- **Energy reserve** as a vertical bar, chosen by engine type: **battery**
+  charge + voltage for electric models, or **fuel** remaining + quantity
+  (against the real tank capacity) for combustion; colored by level.
 - **Plugins ▸ RCHud** menu (Show HUD / Units / Opacity / Background) plus
   bindable commands; **units** metric ↔ aviation; adjustable **opacity**
   and **background panel**; persistent preferences.

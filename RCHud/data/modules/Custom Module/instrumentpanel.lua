@@ -128,6 +128,7 @@ end
 local M_TO_FT   = 3.28084
 local FPM_TO_MS = 0.00508
 local KT_TO_KMH = 1.852
+local KG_TO_LB  = 2.20462
 
 local function speedParts(kts)
     if useMetric() then return kts * KT_TO_KMH, "km/h" else return kts, "kt" end
@@ -301,6 +302,93 @@ local function drawFixedWheel(x, y, r)
 end
 
 ------------------------------------------------------------------------
+-- Energy reserve indicator (right third of the strip).
+-- Like the power dial, the metric is chosen by engine TYPE (no flicker):
+--   electric (acf_en_type == 3) -> battery state of charge + pack voltage
+--   anything else               -> fuel remaining + quantity
+-- Drawn as a horizontal "battery" icon: the body fills left->right and is
+-- colored green / amber / red by the remaining fraction, with a terminal
+-- nub on the right and the percentage called out beside it.
+--
+-- All of this lives in its own function so the datarefs below are ITS
+-- upvalues, not draw()'s (draw() is near Lua's 60-upvalue limit): draw()
+-- only gains drawEnergy itself.
+------------------------------------------------------------------------
+local battChargeArr = globalPropertyfa("sim/cockpit/electrical/battery_charge_watt_hr", 8)
+local battMaxProp   = globalPropertyf("sim/aircraft/electrical/battery_watt_hr_max")
+local battVoltArr   = globalPropertyfa("sim/cockpit2/electrical/battery_voltage_actual_volts", 8)
+local numBattProp   = globalPropertyi("sim/aircraft/electrical/num_batteries")
+local fuelTotalProp = globalPropertyf("sim/flightmodel/weight/m_fuel_total")  -- current fuel (kg)
+-- Tank capacity (full). Lets the gauge show the ACTUAL pre-flight load against the
+-- real tank size instead of assuming the start is "100%". The docs hedge ("appears
+-- to be in lbs") but it was verified in-sim to be kg, same unit as m_fuel_total
+-- (A10X: acf_m_fuel_tot = 4.536 = 10 lb), so no conversion is needed.
+local fuelCapProp   = globalPropertyf("sim/aircraft/weight/acf_m_fuel_tot")
+
+-- Sum the first n elements of an array property (0 if missing / not a table).
+local function arrSum(prop, n)
+    if prop == nil then return 0 end
+    local t = get(prop)
+    if type(t) ~= "table" then return tonumber(t) or 0 end
+    local s = 0
+    for i = 1, n do s = s + (tonumber(t[i]) or 0) end
+    return s
+end
+
+-- Remaining-fraction color: green > 50%, amber 20..50%, red < 20%.
+local function energyColor(frac)
+    if frac > 0.5 then return green
+    elseif frac > 0.2 then return yellow
+    else return red end
+end
+
+-- Vertical "battery" bar (terminal nub on top, fills bottom->up), sized to sit
+-- next to the FLAPS bar. The right third of the strip is left clear (mini-map).
+local function drawEnergy(cx, top, bot, halfW, labelY)
+    local enType = math.floor(arr1(enTypeArr) + 0.5)
+    local isElectric = (enType == 3)
+
+    local frac, label, subText
+    if isElectric then
+        local maxWh = (get(battMaxProp) or 0) * math.max(get(numBattProp) or 1, 1)
+        label   = "BATT"
+        subText = string.format("%.1f V", arr1(battVoltArr))   -- pack voltage: what RC pilots watch
+        if maxWh > 0 then frac = arrSum(battChargeArr, 8) / maxWh end
+    else
+        local fuel = get(fuelTotalProp) or 0
+        local cap  = get(fuelCapProp) or 0     -- real tank capacity (full)
+        label = "FUEL"
+        -- show the actual loaded quantity in the active unit family
+        if useMetric() then subText = string.format("%.2f kg", fuel)
+        else                subText = string.format("%.1f lb", fuel * KG_TO_LB) end
+        if cap > 0.001 then frac = fuel / cap end
+    end
+
+    -- No usable capacity (e.g. battery not modeled): show "--" rather than a
+    -- misleading 0%. The bar just stays empty; the sub-readout still informs.
+    local pctText, fillColor
+    if frac == nil then
+        pctText, fillColor, frac = "--", lightGrey, 0
+    else
+        if frac < 0 then frac = 0 elseif frac > 1 then frac = 1 end
+        pctText, fillColor = string.format("%.0f%%", frac * 100), energyColor(frac)
+    end
+
+    -- vertical battery: dark track + proportional fill (bottom-up) + doubled outline + top nub
+    local h = top - bot
+    sasl.gl.drawRectangle(cx - halfW, bot, 2 * halfW, h, background)
+    sasl.gl.drawRectangle(cx - halfW, bot, 2 * halfW, h * frac, fillColor)
+    sasl.gl.drawFrame(cx - halfW, bot, 2 * halfW, h, white)
+    sasl.gl.drawFrame(cx - halfW - 1, bot - 1, 2 * halfW + 2, h + 2, white)
+    sasl.gl.drawRectangle(cx - 4, top, 8, 5, white)   -- terminal nub on top
+
+    -- percentage above the nub (colored by state), quantity/voltage below the bar, label at bottom
+    haloText(sourceCodePro, cx, top + 14, pctText, baseFontSize * 0.62, TEXT_ALIGN_CENTER, fillColor)
+    haloText(sourceCodePro, cx, bot - 16, subText, baseFontSize * 0.5,  TEXT_ALIGN_CENTER, lightGrey)
+    haloText(sourceCodePro, cx, labelY,   label,   baseFontSize * 0.7,  TEXT_ALIGN_CENTER, white)
+end
+
+------------------------------------------------------------------------
 -- Window fit: full screen width, anchored at the bottom
 ------------------------------------------------------------------------
 local fittedOnce = false
@@ -366,6 +454,7 @@ function draw()
     local COMP_R   = 50     -- compass radius
     local CX_SPEED, CX_ADI, CX_POWER = 360, 515, 670   -- 360 = anchored next to the AGL tape
     local CX_HEADING, CX_GEAR, CX_FLAPS = 825, 965, 1070
+    local CX_ENERGY = 1160   -- battery/fuel bar, next to FLAPS (right third kept clear for mini-map)
 
     -- pick up the live HUD opacity (menu / command); the wrappers above fade
     -- every primitive by this factor. Clamp and default to fully opaque.
@@ -654,4 +743,10 @@ function draw()
     haloRect(flapsX - 11, markerY - 2, 22, 4, yellow)
     haloText(sourceCodePro, flapsX, flTop + 8, string.format("%.0f%%", flap * 100), baseFontSize * 0.6, TEXT_ALIGN_CENTER, white)
     haloText(sourceCodePro, flapsX, LABEL_Y, "FLAPS", baseFontSize * 0.7, TEXT_ALIGN_CENTER, white)
+
+    --------------------------------------------------------------------
+    -- Energy reserve: battery (electric models) or fuel (combustion).
+    -- Vertical bar next to FLAPS; top=148, bot=76 to match the flaps bar height.
+    --------------------------------------------------------------------
+    drawEnergy(CX_ENERGY, 148, 76, 9, LABEL_Y)
 end
